@@ -91,6 +91,17 @@ export default {
 
     // --- 2. PUBLIC API ENDPOINTS ---
 
+    // Auth Routes
+    if (url.pathname === '/api/auth/register' && request.method === 'POST') {
+        return respond(await handleUserRegister(request, env));
+    }
+    if (url.pathname === '/api/auth/login' && request.method === 'POST') {
+        return respond(await handleUserLogin(request, env));
+    }
+    if (url.pathname === '/api/auth/set-username' && request.method === 'POST') {
+        return respond(await handleSetUsername(request, env));
+    }
+
     if (url.pathname === '/api/public/captures') {
         if (request.method === 'GET') return respond(await handleGetPublicCaptures(request, env));
         if (request.method === 'DELETE') return respond(await handleDeletePublicCapture(request, env));
@@ -244,8 +255,10 @@ async function checkAuth(request) {
 async function handleLogin(request) {
     try {
         const formData = await request.formData();
+        const username = formData.get('username');
         const password = formData.get('password');
-        if (password === PASSWORD) {
+
+        if (username === 'Dtechx24' && password === PASSWORD) {
             return new Response(JSON.stringify({ success: true }), {
                 headers: {
                     'Content-Type': 'application/json',
@@ -253,7 +266,7 @@ async function handleLogin(request) {
                 }
             });
         }
-        return new Response(JSON.stringify({ success: false, error: "Invalid Password" }), {
+        return new Response(JSON.stringify({ success: false, error: "Invalid Credentials" }), {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (e) {
@@ -574,26 +587,44 @@ async function handleGetPublicCaptures(request, env) {
     const keys = list.keys.reverse();
     const totalCount = keys.length;
 
-    let limit = 5;
-    if (user.plan === 'basic') limit = 15;
-    if (user.plan === 'premium') limit = 250;
-    if (user.plan === 'gold') limit = 100000;
+    // 1. Plan Limits (Total Visible Cap)
+    let planLimit = 5;
+    if (user.plan === 'basic') planLimit = 15;
+    if (user.plan === 'premium') planLimit = 250;
+    if (user.plan === 'gold') planLimit = 100000;
 
-    const visibleKeys = keys.slice(0, limit);
-    const hiddenCount = Math.max(0, totalCount - limit);
+    const visibleKeys = keys.slice(0, planLimit);
+    const hiddenCount = Math.max(0, totalCount - planLimit);
 
-    const promises = visibleKeys.map(async (k) => {
+    // 2. Pagination Logic
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const perPage = parseInt(url.searchParams.get('limit')) || 10;
+    const startIndex = (page - 1) * perPage;
+    const endIndex = startIndex + perPage;
+
+    const paginatedKeys = visibleKeys.slice(startIndex, endIndex);
+
+    const promises = paginatedKeys.map(async (k) => {
         const val = await env.SUBDOMAINS.get(k.name, { type: "json" });
         return { key: k.name, ...val };
     });
 
     const results = await Promise.all(promises);
+
     return new Response(JSON.stringify({
         success: true,
         data: results,
+        pagination: {
+            page: page,
+            perPage: perPage,
+            totalVisible: visibleKeys.length,
+            totalPages: Math.ceil(visibleKeys.length / perPage)
+        },
         total: totalCount,
         hidden: hiddenCount,
         plan: user.plan,
+        username: user.username,
+        activityLog: user.activityLog || [],
         pendingPlan: user.pendingPlan,
         expiry: user.expiry,
         lastPayment: user.lastPaymentDate,
@@ -670,6 +701,10 @@ async function handlePaymentSubmit(request, env) {
             provisionalPlan = 'premium';
             pendingStatus = 'gold';
             user.pendingPlan = 'gold';
+        } else if (requestedPlan === 'premium') {
+            provisionalPlan = 'basic';
+            pendingStatus = 'premium';
+            user.pendingPlan = 'premium';
         } else {
              provisionalPlan = requestedPlan;
              if (user.pendingPlan) delete user.pendingPlan;
@@ -695,6 +730,8 @@ async function handlePaymentSubmit(request, env) {
         let msg = "Payment submitted. Access granted pending review.";
         if (pendingStatus === 'gold') {
             msg = "Payment submitted. Provisional Premium access granted. Gold status pending verification.";
+        } else if (pendingStatus === 'premium') {
+            msg = "Payment submitted. Provisional Basic access granted. Premium status pending verification.";
         }
 
         return new Response(JSON.stringify({ success: true, message: msg }), {
@@ -731,12 +768,8 @@ async function handleVoucherAction(request, env) {
             let currentExpiry = user.expiry || now;
             if (currentExpiry < now) currentExpiry = now;
 
-            if (user.pendingPlan === 'gold' && voucher.plan === 'gold') {
-                user.plan = 'gold';
-                delete user.pendingPlan;
-            } else {
-                user.plan = voucher.plan;
-            }
+            user.plan = voucher.plan;
+            if (user.pendingPlan) delete user.pendingPlan;
 
             user.expiry = currentExpiry + (30 * 24 * 60 * 60 * 1000);
             user.lastPaymentDate = now;
@@ -823,6 +856,150 @@ async function handleGetTemplatePreview(request, env) {
 function jsonError(msg, status = 400) {
     return new Response(JSON.stringify({ success: false, error: msg }), { status: status, headers: { 'Content-Type': 'application/json' } });
 }
+
+async function handleUserRegister(request, env) {
+    try {
+        const body = await request.json();
+        const { username, uniqueCode } = body; // uniqueCode is generated by client for now, or we can gen here.
+        // User requirements say "First new users are required to have a username and a code"
+        // Let's assume client generates code to keep it consistent with current flow,
+        // OR we generate it here. The prompt said "New users are required to pick a Username when they generate their key".
+
+        if (!username || !uniqueCode) return jsonError("Missing username or code");
+        if (username.length < 3) return jsonError("Username too short");
+
+        // Check if username taken
+        const existingCode = await env.SUBDOMAINS.get(`username::${username.toLowerCase()}`);
+        if (existingCode) return jsonError("Username already taken");
+
+        // Check if code taken (unlikely with UUID/Random)
+        const existingUser = await env.SUBDOMAINS.get(`user::${uniqueCode}`);
+        if (existingUser) return jsonError("Code collision, please try again");
+
+        // Reserve Username
+        await env.SUBDOMAINS.put(`username::${username.toLowerCase()}`, uniqueCode);
+
+        // Create User
+        const user = {
+            username: username,
+            plan: 'free',
+            strikes: 0,
+            status: 'active',
+            created: Date.now(),
+            expiry: null,
+            activityLog: []
+        };
+        await saveUser(env, uniqueCode, user);
+        await logActivity(env, uniqueCode, request, "Registration");
+
+        return new Response(JSON.stringify({ success: true, username, uniqueCode }), { headers: { 'Content-Type': 'application/json' } });
+    } catch (e) {
+        return jsonError(e.message, 500);
+    }
+}
+
+async function handleUserLogin(request, env) {
+    try {
+        const body = await request.json();
+        const { username, password, isLegacy } = body;
+
+        let code = null;
+        let requiresUsername = false;
+
+        if (isLegacy) {
+            // Legacy Login: Password is the Code
+            code = password;
+            if (!code) return jsonError("Missing code");
+
+            const user = await getUser(env, code);
+            // getUser returns a default object if not found, but we need to know if it REALLY exists for login
+            // actually getUser checks KV. If KV is null, it returns default.
+            // We should check raw KV to verify existence for login.
+            const rawUser = await env.SUBDOMAINS.get(`user::${code}`);
+            if (!rawUser) return jsonError("Invalid Code");
+
+            if (!user.username) requiresUsername = true;
+
+        } else {
+            // Standard Login: Username + Password (Code)
+            if (!username || !password) return jsonError("Missing credentials");
+
+            // Lookup Code from Username
+            code = await env.SUBDOMAINS.get(`username::${username.toLowerCase()}`);
+            if (!code) return jsonError("Invalid Username or Password");
+
+            if (code !== password) return jsonError("Invalid Username or Password");
+        }
+
+        // Log Activity
+        await logActivity(env, code, request, "Login");
+
+        return new Response(JSON.stringify({
+            success: true,
+            code: code,
+            requiresUsername: requiresUsername
+        }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (e) {
+        return jsonError(e.message, 500);
+    }
+}
+
+async function handleSetUsername(request, env) {
+    try {
+        const body = await request.json();
+        const { code, username } = body;
+
+        if (!code || !username) return jsonError("Missing fields");
+
+        // Verify user exists
+        const user = await getUser(env, code);
+        const rawUser = await env.SUBDOMAINS.get(`user::${code}`); // Check existence
+        if (!rawUser) return jsonError("User not found");
+
+        if (user.username) return jsonError("Username already set");
+
+        // Check if username taken
+        const existing = await env.SUBDOMAINS.get(`username::${username.toLowerCase()}`);
+        if (existing) return jsonError("Username already taken");
+
+        // Save
+        await env.SUBDOMAINS.put(`username::${username.toLowerCase()}`, code);
+        user.username = username;
+        await saveUser(env, code, user);
+
+        return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
+
+    } catch (e) {
+        return jsonError(e.message, 500);
+    }
+}
+
+async function logActivity(env, code, request, action) {
+    try {
+        const user = await getUser(env, code);
+        if (!user.activityLog) user.activityLog = [];
+
+        const ip = request.headers.get('CF-Connecting-IP') || 'Unknown';
+        const ua = request.headers.get('User-Agent') || 'Unknown';
+
+        user.activityLog.unshift({
+            action,
+            timestamp: Date.now(),
+            ip,
+            ua: ua.substring(0, 50) + (ua.length > 50 ? '...' : '')
+        });
+
+        // Keep last 10
+        if (user.activityLog.length > 10) user.activityLog.pop();
+
+        await saveUser(env, code, user);
+    } catch (e) {
+        // Ignore logging errors
+        console.log("Logging error", e);
+    }
+}
+
 
 const INJECTION_SCRIPT = `
 // CONFIG
