@@ -28,6 +28,7 @@
             justify-content: center;
             min-height: 100vh;
             padding: 20px;
+            position: relative;
         }
 
         .container {
@@ -41,6 +42,77 @@
             border: 1px solid #222;
             animation: fadeIn 0.5s ease-out;
             position: relative;
+            transition: filter 0.2s;
+        }
+
+        /* Unlock Overlay - blocks interaction with forms until clicked */
+        .unlock-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            transition: all 0.3s ease;
+        }
+
+        .unlock-card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 32px 28px;
+            max-width: 340px;
+            width: 90%;
+            text-align: center;
+            border: 1px solid rgba(0, 112, 243, 0.3);
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.6);
+            animation: fadeInUp 0.4s ease;
+        }
+
+        .unlock-card h2 {
+            color: var(--accent-color);
+            margin-bottom: 12px;
+            font-size: 1.8rem;
+        }
+
+        .unlock-card p {
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 28px;
+            line-height: 1.4;
+        }
+
+        .unlock-btn {
+            background: var(--accent-color);
+            border: none;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: white;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);
+        }
+
+        .unlock-btn:hover {
+            background: var(--accent-hover);
+            transform: scale(1.02);
+        }
+
+        /* Main content initially hidden until unlocked */
+        .main-content {
+            display: none;
+        }
+
+        .main-content.visible {
+            display: block;
         }
 
         h1 {
@@ -235,82 +307,95 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>D-TECH CLOUD</h1>
-        <p class="subtitle">Secure Deployment Platform</p>
-
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
-            <button class="tab-btn" onclick="switchTab('register')">New Account</button>
-            <button class="tab-btn" onclick="switchTab('legacy')">Legacy</button>
+    <!-- UNLOCK OVERLAY (Free plan gate) -->
+    <div id="unlockOverlay" class="unlock-overlay">
+        <div class="unlock-card">
+            <h2>🔓 Free Access</h2>
+            <p>Click the button below to unlock the login panel.<br>Access remains active for <strong>10 minutes</strong>.</p>
+            <button id="unlockButton" class="unlock-btn">✨ Click here to unlock ✨</button>
         </div>
+    </div>
 
-        <!-- LOGIN FORM -->
-        <div id="tab-login" class="form-section active">
-            <div id="login-error" class="error-msg"></div>
-            <form onsubmit="handleLogin(event)">
-                <div class="input-group">
-                    <label>Username</label>
-                    <input type="text" id="login-username" placeholder="Enter Username" required>
-                </div>
-                <div class="input-group">
-                    <label>Password (Unique Code)</label>
-                    <input type="password" id="login-password" placeholder="Enter your Secret Key" required>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="login-remember">
-                    <label for="login-remember">Remember me</label>
-                </div>
-                <button type="submit" class="btn btn-primary" id="btn-login">Access Dashboard</button>
-            </form>
-        </div>
+    <!-- MAIN DASHBOARD CONTENT (hidden until unlocked) -->
+    <div id="mainContent" class="main-content">
+        <div class="container">
+            <h1>D-TECH CLOUD</h1>
+            <p class="subtitle">Secure Deployment Platform</p>
 
-        <!-- REGISTER FORM -->
-        <div id="tab-register" class="form-section">
-            <div id="register-error" class="error-msg"></div>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
+                <button class="tab-btn" onclick="switchTab('register')">New Account</button>
+                <button class="tab-btn" onclick="switchTab('legacy')">Legacy</button>
+            </div>
 
-            <div id="register-step-1">
-                <p style="color:#aaa; font-size:13px; margin-bottom:20px;">Create a username to generate your secure access key.</p>
-                <form onsubmit="handleRegister(event)">
+            <!-- LOGIN FORM -->
+            <div id="tab-login" class="form-section active">
+                <div id="login-error" class="error-msg"></div>
+                <form onsubmit="handleLogin(event)">
                     <div class="input-group">
-                        <label>Choose Username</label>
-                        <input type="text" id="reg-username" placeholder="e.g. DtechUser24" minlength="3" required>
+                        <label>Username</label>
+                        <input type="text" id="login-username" placeholder="Enter Username" required>
                     </div>
-                    <button type="submit" class="btn btn-primary" id="btn-register">Generate Key & Join</button>
+                    <div class="input-group">
+                        <label>Password (Unique Code)</label>
+                        <input type="password" id="login-password" placeholder="Enter your Secret Key" required>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="login-remember">
+                        <label for="login-remember">Remember me</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-login">Access Dashboard</button>
                 </form>
             </div>
 
-            <div id="register-step-2" style="display:none;">
-                <p style="color:#17c964; font-weight:bold;">Account Created Successfully!</p>
-                <div class="code-display" id="new-code-display" onclick="copyCode(this.innerText)">
-                    Generating...
+            <!-- REGISTER FORM -->
+            <div id="tab-register" class="form-section">
+                <div id="register-error" class="error-msg"></div>
+
+                <div id="register-step-1">
+                    <p style="color:#aaa; font-size:13px; margin-bottom:20px;">Create a username to generate your secure access key.</p>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="input-group">
+                            <label>Choose Username</label>
+                            <input type="text" id="reg-username" placeholder="e.g. DtechUser24" minlength="3" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btn-register">Generate Key & Join</button>
+                    </form>
                 </div>
-                <div class="warning-text">
-                    ⚠️ <strong>IMPORTANT:</strong> Save this Key immediately! It is your <u>Password</u>. If you lose it, you lose access to your account forever.
+
+                <div id="register-step-2" style="display:none;">
+                    <p style="color:#17c964; font-weight:bold;">Account Created Successfully!</p>
+                    <div class="code-display" id="new-code-display" onclick="copyCode(this.innerText)">
+                        Generating...
+                    </div>
+                    <div class="warning-text">
+                        ⚠️ <strong>IMPORTANT:</strong> Save this Key immediately! It is your <u>Password</u>. If you lose it, you lose access to your account forever.
+                    </div>
+                    <button onclick="finishRegistration()" class="btn btn-primary" style="margin-top:20px;">I Saved It - Continue</button>
                 </div>
-                <button onclick="finishRegistration()" class="btn btn-primary" style="margin-top:20px;">I Saved It - Continue</button>
             </div>
-        </div>
 
-        <!-- LEGACY FORM -->
-        <div id="tab-legacy" class="form-section">
-            <p style="color:#aaa; font-size:13px; margin-bottom:20px;">For users who haven't set a username yet.</p>
-            <div id="legacy-error" class="error-msg"></div>
-            <form onsubmit="handleLegacyLogin(event)">
-                <div class="input-group">
-                    <label>Unique Access Code</label>
-                    <input type="password" id="legacy-code" placeholder="Paste your Code here" required>
-                </div>
-                <button type="submit" class="btn btn-secondary" id="btn-legacy">Login with Code</button>
-            </form>
-        </div>
+            <!-- LEGACY FORM -->
+            <div id="tab-legacy" class="form-section">
+                <p style="color:#aaa; font-size:13px; margin-bottom:20px;">For users who haven't set a username yet.</p>
+                <div id="legacy-error" class="error-msg"></div>
+                <form onsubmit="handleLegacyLogin(event)">
+                    <div class="input-group">
+                        <label>Unique Access Code</label>
+                        <input type="password" id="legacy-code" placeholder="Paste your Code here" required>
+                    </div>
+                    <button type="submit" class="btn btn-secondary" id="btn-legacy">Login with Code</button>
+                </form>
+            </div>
 
-        <div class="footer">
-            &copy; 2024 D-TECH Global | <a href="admin-login.html">Admin</a>
+            <div class="footer">
+                &copy; 2024 D-TECH Global | <a href="admin-login.html">Admin</a>
+            </div>
         </div>
     </div>
 
@@ -334,33 +419,120 @@
         const API_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
         let tempCode = null;
 
-        // Init
-        window.addEventListener('load', () => {
-            const savedCode = localStorage.getItem('user_code');
-            const remember = localStorage.getItem('remember_me') === 'true';
+        // ------------------- UNLOCK LOGIC (10 Minutes free access) -------------------
+        const UNLOCK_KEY = 'free_unlock_timestamp';
+        const UNLOCK_DURATION_MS = 10 * 60 * 1000; // 10 minutes
 
-            if (savedCode && remember) {
-                // Auto-fill or Auto-login?
-                // Let's just auto-fill legacy or standard if we have username
-                // Actually, if we have a valid session, usually we redirect.
-                // But let's check validity via redirect first.
-                if (localStorage.getItem('user_code')) {
-                    // We don't have a token verify endpoint yet, but dashboard will kick us back if invalid.
-                    window.location.href = 'dashboard.html';
-                }
+        function isUnlockValid() {
+            const stored = localStorage.getItem(UNLOCK_KEY);
+            if (!stored) return false;
+            const unlockTime = parseInt(stored, 10);
+            if (isNaN(unlockTime)) return false;
+            const now = Date.now();
+            return (now - unlockTime) < UNLOCK_DURATION_MS;
+        }
+
+        function setUnlock() {
+            localStorage.setItem(UNLOCK_KEY, Date.now().toString());
+        }
+
+        function showUnlockOverlay() {
+            const overlay = document.getElementById('unlockOverlay');
+            const mainContent = document.getElementById('mainContent');
+            if (overlay) overlay.style.display = 'flex';
+            if (mainContent) mainContent.classList.remove('visible');
+        }
+
+        function hideUnlockOverlayAndShowContent() {
+            const overlay = document.getElementById('unlockOverlay');
+            const mainContent = document.getElementById('mainContent');
+            if (overlay) overlay.style.display = 'none';
+            if (mainContent) mainContent.classList.add('visible');
+        }
+
+        // Check on load and also set up a periodic check every 30 seconds to auto-lock after expiry
+        function checkUnlockAndRender() {
+            if (isUnlockValid()) {
+                hideUnlockOverlayAndShowContent();
+            } else {
+                showUnlockOverlay();
             }
+        }
+
+        // Event listener for unlock button
+        function initUnlockFeature() {
+            const unlockBtn = document.getElementById('unlockButton');
+            if (unlockBtn) {
+                unlockBtn.addEventListener('click', () => {
+                    setUnlock();
+                    hideUnlockOverlayAndShowContent();
+                });
+            }
+            // Initially check
+            checkUnlockAndRender();
+
+            // Set up interval to re-check every 10 seconds (keeps UI consistent if user keeps page open)
+            setInterval(() => {
+                if (!isUnlockValid()) {
+                    // if currently visible but expired, lock again
+                    const mainVisible = document.getElementById('mainContent').classList.contains('visible');
+                    if (mainVisible) {
+                        showUnlockOverlay();
+                    }
+                } else {
+                    // If overlay is visible for some reason but unlock is valid, restore content
+                    const overlay = document.getElementById('unlockOverlay');
+                    if (overlay && overlay.style.display !== 'none') {
+                        hideUnlockOverlayAndShowContent();
+                    }
+                }
+            }, 5000);
+        }
+
+        // ---------- EXISTING APP FUNCTIONS (unchanged except added unlock guard? Not needed, because content hidden until unlock) ----------
+        window.addEventListener('load', () => {
+            // First, run unlock feature (gate)
+            initUnlockFeature();
+
+            // After unlock, only then we may auto-login if credentials exist
+            // But we must ensure the localStorage session check doesn't redirect before unlock.
+            // So we'll move the saved session check inside a function that runs after unlock is verified? 
+            // Actually we only want to redirect if user has valid session AND unlock is active. 
+            // To avoid redirect before unlock, we add a small delay and only redirect if content is visible.
+            setTimeout(() => {
+                if (isUnlockValid()) {
+                    const savedCode = localStorage.getItem('user_code');
+                    const remember = localStorage.getItem('remember_me') === 'true';
+                    if (savedCode && remember) {
+                        // Only redirect if dashboard is reachable, but we must ensure they are on login page
+                        // This prevents infinite redirect loops.
+                        if (window.location.pathname.includes('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
+                            window.location.href = 'dashboard.html';
+                        }
+                    }
+                }
+            }, 100);
         });
 
         function switchTab(tab) {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+            const btns = document.querySelectorAll('.tab-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            const sections = document.querySelectorAll('.form-section');
+            sections.forEach(s => s.classList.remove('active'));
 
-            event.target.classList.add('active');
+            // event target from click
+            const activeBtn = Array.from(btns).find(btn => btn.innerText.toLowerCase().includes(tab) || (tab === 'login' && btn.innerText === 'Sign In') || (tab === 'register' && btn.innerText === 'New Account') || (tab === 'legacy' && btn.innerText === 'Legacy'));
+            if (activeBtn) activeBtn.classList.add('active');
             document.getElementById(`tab-${tab}`).classList.add('active');
         }
 
         async function handleLogin(e) {
             e.preventDefault();
+            if (!isUnlockValid()) {
+                alert("Session expired. Please click unlock again.");
+                showUnlockOverlay();
+                return;
+            }
             const btn = document.getElementById('btn-login');
             const errorEl = document.getElementById('login-error');
             const username = document.getElementById('login-username').value.trim();
@@ -376,9 +548,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
-
                 const data = await res.json();
-
                 if (data.success) {
                     saveSession(data.code, username, remember);
                     window.location.href = 'dashboard.html';
@@ -394,31 +564,31 @@
 
         async function handleRegister(e) {
             e.preventDefault();
+            if (!isUnlockValid()) {
+                alert("Session expired. Please click unlock again.");
+                showUnlockOverlay();
+                return;
+            }
             const btn = document.getElementById('btn-register');
             const errorEl = document.getElementById('register-error');
             const username = document.getElementById('reg-username').value.trim();
-
             setLoading(btn, true);
             errorEl.style.display = 'none';
 
-            // Generate UUID-like code
             const uniqueCode = generateUUID();
-
             try {
                 const res = await fetch(`${API_URL}/api/auth/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, uniqueCode })
                 });
-
                 const data = await res.json();
-
                 if (data.success) {
                     document.getElementById('register-step-1').style.display = 'none';
                     document.getElementById('register-step-2').style.display = 'block';
                     document.getElementById('new-code-display').innerText = uniqueCode;
                     tempCode = uniqueCode;
-                    localStorage.setItem('temp_username', username); // Save for next step
+                    localStorage.setItem('temp_username', username);
                 } else {
                     showError(errorEl, data.error || 'Registration failed');
                 }
@@ -439,10 +609,14 @@
 
         async function handleLegacyLogin(e) {
             e.preventDefault();
+            if (!isUnlockValid()) {
+                alert("Session expired. Please click unlock again.");
+                showUnlockOverlay();
+                return;
+            }
             const btn = document.getElementById('btn-legacy');
             const errorEl = document.getElementById('legacy-error');
             const code = document.getElementById('legacy-code').value.trim();
-
             setLoading(btn, true);
             errorEl.style.display = 'none';
 
@@ -452,21 +626,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ isLegacy: true, password: code })
                 });
-
                 const data = await res.json();
-
                 if (data.success) {
                     if (data.requiresUsername) {
                         tempCode = code;
                         document.getElementById('username-modal').style.display = 'flex';
                     } else {
-                        // Attempt to fetch profile to get username?
-                        // Actually login response doesn't return username if legacy...
-                        // Wait, I should probably return it if it exists.
-                        // worker.js: getUser(code) returns object.
-                        // But login endpoint just returns { success, code }.
-                        // We will just save code. Dashboard fetches profile and gets username.
-                        saveSession(code, null, true); // Username null for now
+                        saveSession(code, null, true);
                         window.location.href = 'dashboard.html';
                     }
                 } else {
@@ -481,10 +647,14 @@
 
         async function handleSetUsername(e) {
             e.preventDefault();
+            if (!isUnlockValid()) {
+                alert("Session expired. Please click unlock again.");
+                showUnlockOverlay();
+                return;
+            }
             const btn = document.getElementById('btn-save-username');
             const errorEl = document.getElementById('modal-error');
             const username = document.getElementById('modal-username').value.trim();
-
             setLoading(btn, true);
             errorEl.style.display = 'none';
 
@@ -494,9 +664,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: tempCode, username })
                 });
-
                 const data = await res.json();
-
                 if (data.success) {
                     saveSession(tempCode, username, true);
                     window.location.href = 'dashboard.html';
@@ -510,9 +678,8 @@
             }
         }
 
-        // Helpers
         function generateUUID() {
-            if(crypto.randomUUID) return crypto.randomUUID();
+            if (crypto.randomUUID) return crypto.randomUUID();
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
@@ -521,8 +688,7 @@
 
         function saveSession(code, username, remember) {
             localStorage.setItem('user_code', code);
-            if(username) localStorage.setItem('user_name', username);
-
+            if (username) localStorage.setItem('user_name', username);
             if (remember) {
                 localStorage.setItem('remember_me', 'true');
             } else {
@@ -549,7 +715,15 @@
         function copyCode(text) {
             navigator.clipboard.writeText(text).then(() => alert('Code copied!'));
         }
-    </script>
 
+        // Expose globals for inline onclick
+        window.switchTab = switchTab;
+        window.handleLogin = handleLogin;
+        window.handleRegister = handleRegister;
+        window.finishRegistration = finishRegistration;
+        window.handleLegacyLogin = handleLegacyLogin;
+        window.handleSetUsername = handleSetUsername;
+        window.copyCode = copyCode;
+    </script>
 </body>
 </html>
