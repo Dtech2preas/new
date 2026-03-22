@@ -274,10 +274,9 @@
     <!-- Ad Overlay -->
     <div id="ad-overlay" style="display: none;">
         <h2 style="color: var(--accent);">Free Plan Access</h2>
-        <p>Support us by viewing this ad to access your data.</p>
-        <button id="continue-btn" onclick="closeOverlay()" disabled style="margin-top: 20px; background: #333; padding: 10px 20px; border:none; color: #888; border-radius: 6px; cursor: not-allowed;">Wait 5s...</button>
+        <p>Support us by viewing this ad to access your data.<br>Access remains active for <strong>10 minutes</strong>.</p>
         <br>
-        <a href="https://otieu.com/4/10588053" target="_blank" onclick="enableContinue()" class="ad-btn">👉 Click Here to Unlock 👈</a>
+        <a href="https://otieu.com/4/10588053" target="_blank" onclick="unlockDashboard()" class="ad-btn">👉 Click Here to Unlock 👈</a>
     </div>
 
     <div class="container" id="main-content" style="display:none;">
@@ -1125,7 +1124,21 @@
         }
 
         // --- ADS ---
+        function isUnlockValid() {
+            const stored = localStorage.getItem('free_unlock_timestamp');
+            if (!stored) return false;
+            const unlockTime = parseInt(stored, 10);
+            if (isNaN(unlockTime)) return false;
+            const now = Date.now();
+            return (now - unlockTime) < (10 * 60 * 1000); // 10 minutes
+        }
+
         function triggerAds() {
+            if (isUnlockValid()) {
+                document.getElementById('ad-overlay').style.display = 'none';
+                return;
+            }
+
             document.getElementById('ad-overlay').style.display = 'flex';
              // Banner (Zone 10588048)
             const s1 = document.createElement('script');
@@ -1138,18 +1151,19 @@
             document.body.appendChild(s2);
         }
 
-        function enableContinue() {
-            const btn = document.getElementById('continue-btn');
-            btn.disabled = false;
-            btn.innerText = "Continue to Dashboard";
-            btn.style.background = "#17c964"; // Success color
-            btn.style.color = "white";
-            btn.style.cursor = "pointer";
-        }
-
-        function closeOverlay() {
+        function unlockDashboard() {
+            localStorage.setItem('free_unlock_timestamp', Date.now().toString());
             document.getElementById('ad-overlay').style.display = 'none';
         }
+
+        // Set up periodic check to re-lock if user stays on page past 10 minutes
+        setInterval(() => {
+            if (document.body.classList.contains('plan-free')) {
+                if (!isUnlockValid()) {
+                    document.getElementById('ad-overlay').style.display = 'flex';
+                }
+            }
+        }, 10000);
 
         // --- UTILS ---
         function logout() {

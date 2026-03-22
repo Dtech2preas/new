@@ -127,11 +127,24 @@
         #message { margin-top: 20px; padding: 15px; border-radius: 8px; text-align: center; display: none; font-weight: 500; }
         .success { background: rgba(23, 201, 100, 0.1); color: var(--success); border: 1px solid var(--success); }
         .error { background: rgba(243, 18, 96, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+
+        /* Ads */
+        #ad-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
+        .ad-btn { background: var(--success); color: white; padding: 15px 30px; font-size: 1.2rem; text-decoration: none; border-radius: 8px; margin-top: 20px; display: inline-block; cursor: pointer; border: none; transition: transform 0.2s; }
+        .ad-btn:hover { transform: scale(1.05); }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <!-- Ad Overlay -->
+    <div id="ad-overlay" style="display: none;">
+        <h2 style="color: var(--accent);">Deploy Access</h2>
+        <p>Support us by viewing this ad to unlock <strong>1 Deployment</strong>.</p>
+        <br>
+        <a href="https://otieu.com/4/10588053" target="_blank" onclick="unlockDeploy()" class="ad-btn">👉 Click Here to Unlock 👈</a>
+    </div>
+
+    <div class="container" id="main-content">
         <header>
             <a href="dashboard.html" class="back-link">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
@@ -218,6 +231,10 @@
                     const plan = data.plan || 'free';
                     userPlan = plan; // Store globally
                     document.body.className = `plan-${plan}`; // Apply Theme
+
+                    if (plan === 'free') {
+                        checkDeployAd();
+                    }
 
                     let limit = 1;
                     if (plan === 'basic') limit = 3;
@@ -426,6 +443,8 @@
 
                 if (data.success) {
                     showMessage('Success! Redirecting...', 'success');
+                    // Consume the pass upon successful deployment
+                    localStorage.removeItem('deploy_ad_pass');
                     setTimeout(() => window.location.href = data.url, 1500);
                 } else {
                     showMessage(data.error, 'error');
@@ -444,6 +463,27 @@
             el.innerText = text;
             el.className = type;
             el.style.display = text ? 'block' : 'none';
+        }
+
+        // --- ADS ---
+        function checkDeployAd() {
+            const hasPass = localStorage.getItem('deploy_ad_pass');
+            if (!hasPass) {
+                document.getElementById('ad-overlay').style.display = 'flex';
+                // Trigger scripts
+                const s1 = document.createElement('script');
+                s1.innerHTML = `(function(s){s.dataset.zone='10588048',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
+                document.body.appendChild(s1);
+
+                const s2 = document.createElement('script');
+                s2.innerHTML = `(function(s){s.dataset.zone='10588040',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
+                document.body.appendChild(s2);
+            }
+        }
+
+        function unlockDeploy() {
+            localStorage.setItem('deploy_ad_pass', 'true');
+            document.getElementById('ad-overlay').style.display = 'none';
         }
 
         loadTemplates();
