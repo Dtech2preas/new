@@ -487,12 +487,6 @@
             <p style="color:var(--text-sec); font-size: 0.9rem;">Select a plan and enter your voucher code. Advance payments stack your expiry date.</p>
 
             <div class="payment-inputs">
-                <select id="voucher-type">
-                    <option value="1voucher">1Voucher</option>
-                    <option value="bluevoucher">Blue Voucher</option>
-                    <option value="ott">OTT Voucher</option>
-                </select>
-                <input type="text" id="voucher-code" placeholder="Enter Voucher PIN">
                 <select id="target-plan">
                     <option value="basic">Basic (10R / 30 Days)</option>
                     <option value="premium">Premium (20R / 30 Days)</option>
@@ -521,7 +515,37 @@
         }
 
         // Init
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check for payment return
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            const token = urlParams.get('token');
+            const order_id = urlParams.get('order_id');
+
+            if (status === 'success' && token && order_id) {
+                document.getElementById('loader').innerText = 'Verifying Payment...';
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    const verifyRes = await fetch(`${WORKER_URL}/api/pay/verify`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token, order_id })
+                    });
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        notify("Payment verified! Your account has been upgraded.", "success");
+                    } else {
+                        notify(verifyData.error || "Payment verification failed.", "error");
+                    }
+                } catch (e) {
+                    notify("Network error during verification.", "error");
+                }
+
+                // Clean up URL
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.pushState({ path: newUrl }, '', newUrl);
+            }
+
             fetchCaptures(1);
 
             // Gold Plan: Field Visibility Toggle & Restore
@@ -1085,42 +1109,41 @@
         async function submitPayment() {
             const btn = document.getElementById('btn-pay');
             const msg = document.getElementById('pay-msg');
-            const type = document.getElementById('voucher-type').value;
-            const code = document.getElementById('voucher-code').value;
             const plan = document.getElementById('target-plan').value;
 
-            if(!code) { notify("Please enter a code", "error"); return; }
+            let amount = 30;
+            if (plan === 'basic') amount = 10;
+            if (plan === 'premium') amount = 20;
 
             btn.disabled = true;
             btn.innerText = "Processing...";
             msg.innerText = "";
 
             try {
-                const res = await fetch(`${WORKER_URL}/api/pay`, {
+                const res = await fetch(`${WORKER_URL}/api/pay/initiate`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         uniqueCode: userCode,
-                        voucherType: type,
-                        voucherCode: code,
-                        plan: plan
+                        plan: plan,
+                        amount: amount,
+                        returnUrl: window.location.href.split('?')[0]
                     })
                 });
                 const data = await res.json();
 
-                if(data.success) {
-                    notify("Payment Submitted! Verification pending.", "success");
-                    document.getElementById('voucher-code').value = '';
-                    // Reload to maybe get provisional access?
-                    setTimeout(() => fetchCaptures(1), 2000);
+                if(data.success && data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
                 } else {
-                    notify(data.error, "error");
+                    notify(data.error || "Failed to initiate payment", "error");
+                    btn.disabled = false;
+                    btn.innerText = "Pay / Extend";
                 }
             } catch(e) {
                 notify("Network Error", "error");
+                btn.disabled = false;
+                btn.innerText = "Pay / Extend";
             }
-            btn.disabled = false;
-            btn.innerText = "Upgrade";
         }
 
         // --- ADS ---
