@@ -132,8 +132,12 @@ export default {
     }
 
     // Payment Submission
-    if (url.pathname === '/api/pay' && request.method === 'POST') {
-        return respond(await handlePaymentSubmit(request, env));
+    if (url.pathname === '/api/pay/initiate' && request.method === 'POST') {
+        return respond(await handlePaymentInitiate(request, env));
+    }
+
+    if (url.pathname === '/api/pay/verify' && request.method === 'POST') {
+        return respond(await handlePaymentVerify(request, env));
     }
 
     // --- 3. SUBDOMAIN ROUTING ---
@@ -684,57 +688,83 @@ async function handleDeletePublicCapture(request, env) {
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
 }
 
-async function handlePaymentSubmit(request, env) {
+async function handlePaymentInitiate(request, env) {
     try {
         const body = await request.json();
-        const { uniqueCode, voucherType, voucherCode } = body;
-        if (!uniqueCode || !voucherType || !voucherCode) return jsonError("Missing fields");
+        const { uniqueCode, plan, amount, returnUrl } = body;
+        if (!uniqueCode || !plan || !amount || !returnUrl) return jsonError("Missing fields");
 
         const user = await getUser(env, uniqueCode);
         if (user.status === 'banned') return jsonError("Account is permanently banned.");
 
-        const requestedPlan = body.plan || 'premium';
-        let provisionalPlan = requestedPlan;
-        let pendingStatus = null;
-
-        if (requestedPlan === 'gold') {
-            provisionalPlan = 'premium';
-            pendingStatus = 'gold';
-            user.pendingPlan = 'gold';
-        } else if (requestedPlan === 'premium') {
-            provisionalPlan = 'basic';
-            pendingStatus = 'premium';
-            user.pendingPlan = 'premium';
-        } else {
-             provisionalPlan = requestedPlan;
-             if (user.pendingPlan) delete user.pendingPlan;
-        }
-
-        user.plan = provisionalPlan;
-
-        await saveUser(env, uniqueCode, user);
-
-        const voucherId = crypto.randomUUID();
-        const voucherData = {
-            id: voucherId,
+        const orderId = `ORD-${crypto.randomUUID()}`;
+        const orderData = {
+            orderId,
             uniqueCode,
-            voucherType,
-            voucherCode,
-            plan: requestedPlan,
-            submitted: Date.now(),
+            plan,
+            amount,
+            timestamp: Date.now(),
             status: 'pending'
         };
 
-        await env.SUBDOMAINS.put(`voucher_queue::${voucherId}`, JSON.stringify(voucherData));
+        await env.SUBDOMAINS.put(`order::${orderId}`, JSON.stringify(orderData), { expirationTtl: 86400 }); // Expire after 24h
 
-        let msg = "Payment submitted. Access granted pending review.";
-        if (pendingStatus === 'gold') {
-            msg = "Payment submitted. Provisional Premium access granted. Gold status pending verification.";
-        } else if (pendingStatus === 'premium') {
-            msg = "Payment submitted. Provisional Basic access granted. Premium status pending verification.";
+        let itemName = "Basic Plan";
+        if (plan === 'premium') itemName = "Premium Plan";
+        if (plan === 'gold') itemName = "Gold Plan";
+
+        const redirectUrl = `https://student.dtech-services.co.za/payment.html?amount=${amount}&item=${encodeURIComponent(itemName)}&order_id=${encodeURIComponent(orderId)}&return_url=${encodeURIComponent(returnUrl)}`;
+
+        return new Response(JSON.stringify({ success: true, redirectUrl }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (e) {
+        return jsonError(e.message, 500);
+    }
+}
+
+async function handlePaymentVerify(request, env) {
+    try {
+        const body = await request.json();
+        const { token, order_id } = body;
+        if (!token || !order_id) return jsonError("Missing fields");
+
+        const orderDataRaw = await env.SUBDOMAINS.get(`order::${order_id}`);
+        if (!orderDataRaw) return jsonError("Invalid or expired order.");
+
+        const orderData = JSON.parse(orderDataRaw);
+
+        // Verify with D-TECH Gateway
+        const verifyRes = await fetch("https://dark-mud-87fb.jonasmochebane.workers.dev/verify-payment", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token, order_id })
+        });
+
+        const verifyData = await verifyRes.json();
+
+        if (!verifyRes.ok || !verifyData.valid) {
+            return jsonError(verifyData.error || "Payment verification failed.");
         }
 
-        return new Response(JSON.stringify({ success: true, message: msg }), {
+        // Apply Upgrade
+        const user = await getUser(env, orderData.uniqueCode);
+
+        const now = Date.now();
+        let currentExpiry = user.expiry || now;
+        if (currentExpiry < now) currentExpiry = now;
+
+        user.plan = orderData.plan;
+        if (user.pendingPlan) delete user.pendingPlan;
+
+        user.expiry = currentExpiry + (30 * 24 * 60 * 60 * 1000);
+        user.lastPaymentDate = now;
+        user.status = 'active';
+
+        await saveUser(env, orderData.uniqueCode, user);
+        await env.SUBDOMAINS.delete(`order::${order_id}`);
+
+        return new Response(JSON.stringify({ success: true }), {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (e) {
