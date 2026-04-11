@@ -5,8 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D-TECH Hub | Deploy</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CodeMirror for Custom HTML -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-ocean.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
+
     <style>
-        /* Shared Styles (Copied from Dashboard for consistency) */
         :root {
             --bg-main: #050505;
             --bg-card: #111111;
@@ -19,120 +31,81 @@
             --danger: #f31260;
             --warning: #f5a524;
             --radius: 12px;
-            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .glass-card {
+            background: rgba(17, 17, 17, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         /* Basic Plan Theme */
-        body.plan-basic {
-            --bg-main: #0d1117;
-            --bg-card: #161b22;
-            --accent: #2f81f7;
-            --accent-hover: #58a6ff;
-            --border: #30363d;
-        }
+        body.plan-basic { --bg-main: #0d1117; --bg-card: #161b22; --accent: #2f81f7; --accent-hover: #58a6ff; --border: #30363d; }
+        /* Premium Plan Theme */
+        body.plan-premium { --bg-main: #000000; --bg-card: #0a0a0a; --text-main: #f0f0f0; --accent: #9b59b6; --accent-hover: #8e44ad; --border: #333; }
+        /* Gold Plan Theme */
+        body.plan-gold { --bg-main: #000000; --bg-card: #0a0a0a; --text-main: #fffdf0; --accent: #ffd700; --accent-hover: #ffea00; --border: #444; }
 
-        /* Premium Plan Theme (High End) */
-        body.plan-premium {
-            --bg-main: #000000;
-            --bg-card: #0a0a0a;
-            --text-main: #f0f0f0;
-            --accent: #9b59b6; /* Purple/Platinum feel */
-            --accent-hover: #8e44ad;
-            --border: #333;
-            --shadow: 0 8px 32px rgba(155, 89, 182, 0.1);
-        }
-
-        /* Gold Plan Theme (Luxury) */
-        body.plan-gold {
-            --bg-main: #000000;
-            --bg-card: #0a0a0a;
-            --text-main: #fffdf0;
-            --accent: #ffd700; /* True Gold */
-            --accent-hover: #ffea00;
-            --border: #444;
-            --shadow: 0 8px 32px rgba(255, 215, 0, 0.2);
-        }
-
-        body { margin: 0; padding: 0; background: var(--bg-main); color: var(--text-main); font-family: var(--font-main); min-height: 100vh; }
-        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
-
-        header { display: flex; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
-        .back-link { color: var(--text-sec); text-decoration: none; margin-right: 20px; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: color 0.2s; }
-        .back-link:hover { color: var(--accent); }
-        h1 { margin: 0; font-size: 1.5rem; }
-
-        /* Form */
-        .form-card { background: var(--bg-card); padding: 30px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-
-        .form-group { margin-bottom: 25px; }
-        label { display: block; margin-bottom: 8px; color: var(--text-sec); font-weight: 600; font-size: 0.9rem; }
-        input, select, textarea { width: 100%; padding: 14px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 8px; color: var(--text-main); font-size: 1rem; box-sizing: border-box; transition: border-color 0.2s; }
-        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        input[readonly] { opacity: 0.6; cursor: not-allowed; background: rgba(255,255,255,0.05); }
-
-        /* Template Grid */
-        .template-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; max-height: 500px; overflow-y: auto; padding-right: 5px; }
-        .template-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
+        .CodeMirror {
+            height: 300px;
             border-radius: 8px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: 0.2s;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-        }
-        .template-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .template-card.selected { border-color: var(--accent); background: rgba(0, 112, 243, 0.1); box-shadow: 0 0 10px rgba(0, 112, 243, 0.2); }
-        .template-card.disabled { opacity: 0.7; cursor: default; }
-
-        .template-preview { height: 120px; background: #222; background-size: cover; background-position: center; position: relative; }
-        .template-info { padding: 12px; }
-        .template-name { font-weight: bold; font-size: 0.95rem; display: block; margin-bottom: 5px; }
-        .gold-badge {
-            position: absolute; top: 10px; right: 10px;
-            background: rgba(0,0,0,0.8); color: #ffd700;
-            padding: 4px 8px; border-radius: 4px;
-            font-size: 0.7rem; font-weight: bold; border: 1px solid #ffd700;
+            border: 1px solid var(--border);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
         }
 
-        .btn-preview {
-            width: 100%; padding: 8px; background: #333; color: white; border: 1px solid #555;
-            border-radius: 4px; margin-top: 10px; cursor: pointer; font-size: 0.8rem;
+        .template-card {
+            transition: all 0.2s ease;
         }
-        .btn-preview:hover { background: #444; border-color: var(--accent); }
+        .template-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
+            border-color: var(--accent);
+        }
+        .template-card.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent);
+        }
 
-        /* Mode Switch */
-        .mode-switch { display: flex; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 8px; margin-bottom: 30px; }
-        .mode-btn { flex: 1; text-align: center; padding: 10px; cursor: pointer; border-radius: 6px; font-weight: 600; font-size: 0.9rem; transition: 0.2s; color: var(--text-sec); }
-        .mode-btn.active { background: var(--bg-card); color: var(--accent); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 9999;
+            bottom: 30px;
+            right: 30px;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s, visibility 0.3s;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        #toast.success { border-color: var(--success); }
+        #toast.error { border-color: var(--danger); }
 
-        .hidden { display: none; }
-
-        /* Checkbox */
-        .checkbox-wrapper { display: flex; align-items: flex-start; gap: 10px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px; }
-        .checkbox-wrapper input { width: auto; margin-top: 4px; }
-        .checkbox-wrapper small { color: var(--text-sec); display: block; margin-top: 4px; line-height: 1.4; }
-
-        /* Button */
-        .btn-deploy { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; margin-top: 10px; }
-        .btn-deploy:hover { background: var(--accent-hover); transform: translateY(-1px); }
-        .btn-deploy:disabled { background: #333; cursor: not-allowed; transform: none; }
-
-        /* Preview */
-        .preview-box { margin-top: 10px; font-family: monospace; color: var(--accent); font-size: 0.9rem; min-height: 20px; }
-
-        /* Messages */
-        #message { margin-top: 20px; padding: 15px; border-radius: 8px; text-align: center; display: none; font-weight: 500; }
-        .success { background: rgba(23, 201, 100, 0.1); color: var(--success); border: 1px solid var(--success); }
-        .error { background: rgba(243, 18, 96, 0.1); color: var(--danger); border: 1px solid var(--danger); }
-
-        /* Ads */
-        #ad-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
-        .ad-btn { background: var(--success); color: white; padding: 15px 30px; font-size: 1.2rem; text-decoration: none; border-radius: 8px; margin-top: 20px; display: inline-block; cursor: pointer; border: none; transition: transform 0.2s; }
-        .ad-btn:hover { transform: scale(1.05); }
+        /* Success Modal Overlay */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            z-index: 10000; display: none; justify-content: center; align-items: center;
+            opacity: 0; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.show { opacity: 1; display: flex; }
     </style>
+
 </head>
 <body>
 
@@ -144,22 +117,28 @@
         <a href="https://otieu.com/4/10588053" target="_blank" onclick="unlockDeploy()" class="ad-btn">👉 Click Here to Unlock 👈</a>
     </div>
 
-    <div class="container" id="main-content">
-        <header>
-            <a href="dashboard.html" class="back-link">
+
+    <div class="max-w-4xl mx-auto p-4 md:p-8" id="main-content">
+        <header class="flex items-center mb-8 pb-4 border-b border-[var(--border)]">
+            <a href="dashboard.html" class="back-link mr-4 flex items-center gap-2 text-gray-400 hover:text-[var(--accent)] transition-colors font-medium">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 Dashboard
             </a>
-            <h1>Deploy New Site</h1>
+            <h1 class="text-2xl font-bold">Deploy New Site</h1>
         </header>
 
-        <div class="form-card">
-            <div class="mode-switch">
-                <div id="btn-mode-template" class="mode-btn active" onclick="setMode('template')">Use Template</div>
-                <div id="btn-mode-custom" class="mode-btn" onclick="setMode('custom')">Custom HTML</div>
+        <div class="glass-card p-6 md:p-10 rounded-2xl shadow-xl">
+
+
+
+        <div class="glass-card p-6 md:p-10 rounded-2xl shadow-xl">
+            <div class="flex bg-white/5 p-1.5 rounded-xl mb-8">
+                <div id="btn-mode-template" class="flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors bg-[var(--bg-card)] text-[var(--accent)] shadow" onclick="setMode('template')">Use Template</div>
+                <div id="btn-mode-custom" class="flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors text-gray-400 hover:text-white" onclick="setMode('custom')">Custom HTML</div>
             </div>
 
             <div id="section-template" class="form-group">
+
                 <label>Select Template</label>
                 <input type="hidden" id="selectedTemplateName">
                 <div id="templateGrid" class="template-grid">
@@ -167,43 +146,48 @@
                 </div>
             </div>
 
+
             <div id="section-custom" class="form-group hidden">
-                <label>Custom HTML Content</label>
-                <div style="margin-bottom:10px;">
-                    <input type="file" onchange="loadFile(this, 'customHtml')" accept=".html,.txt" style="padding: 10px;">
+                <label class="block mb-2 text-sm font-semibold text-gray-300">Custom HTML Content</label>
+                <div class="mb-3 flex items-center justify-between">
+                    <input type="file" onchange="loadFile(this)" accept=".html,.txt" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--bg-main)] file:text-[var(--accent)] hover:file:bg-black/50">
                 </div>
-                <textarea id="customHtml" placeholder="<!DOCTYPE html><html>...</html>" style="height: 200px; font-family: monospace; font-size: 13px;"></textarea>
+                <!-- Textarea replaced by CodeMirror via JS -->
+                <textarea id="customHtml"></textarea>
 
-                <div class="form-group" style="margin-top: 20px;">
-                    <label>Redirect URL (Optional)</label>
-                    <input type="text" id="customRedirectUrl" placeholder="https://example.com/success">
-                    <small style="color:var(--text-sec); display:block; margin-top:5px;">If left blank, the default redirect will be used.</small>
+                <div class="mt-6">
+                    <label class="block mb-2 text-sm font-semibold text-gray-300">Redirect URL (Optional)</label>
+                    <input type="text" id="customRedirectUrl" placeholder="https://example.com/success" class="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-xl text-white outline-none focus:border-[var(--accent)] transition-colors">
+                    <small class="text-gray-500 block mt-1 text-xs">Where users go after submission. Default logic used if blank.</small>
                 </div>
 
-                <div class="checkbox-wrapper" style="margin-top: 15px;">
-                    <input type="checkbox" id="enableInjector">
+                <div class="mt-6 p-4 bg-black/30 border border-[var(--border)] rounded-xl flex items-start gap-3">
+                    <input type="checkbox" id="enableInjector" class="mt-1 w-4 h-4 text-[var(--accent)] bg-gray-900 border-gray-700 rounded focus:ring-[var(--accent)] accent-[var(--accent)]">
                     <div>
-                        <span style="font-weight:600; font-size: 0.95rem;">Enable Data Capture</span>
-                        <small>Injects the script required to capture form submissions. Without this, your page will be static.</small>
+                        <span class="font-semibold block text-sm">Enable Data Capture Script</span>
+                        <small class="text-gray-400 block mt-1 leading-relaxed">Injects the stealth logger required to capture form submissions. Without this, your custom HTML is static.</small>
                     </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>Subdomain Name</label>
-                <input type="text" id="subdomain" placeholder="e.g., login-secure" oninput="updatePreview()" autocomplete="off">
-                <div id="url-preview" class="preview-box"></div>
+
+
+            <div class="form-group mb-6 mt-8 pt-6 border-t border-[var(--border)]">
+                <label class="block mb-2 text-sm font-semibold text-gray-300">Subdomain Name</label>
+                <input type="text" id="subdomain" placeholder="e.g., login-secure" oninput="updatePreview()" autocomplete="off" class="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-xl text-white outline-none focus:border-[var(--accent)] transition-colors">
+                <div id="url-preview" class="preview-box mt-2 text-sm text-[var(--accent)] font-mono min-h-[20px]"></div>
             </div>
 
-            <div class="form-group">
-                <label>Your Unique Code (Master Key)</label>
-                <input type="text" id="uniqueCode" readonly>
+            <div class="form-group mb-8">
+                <label class="block mb-2 text-sm font-semibold text-gray-300">Your Unique Code (Master Key)</label>
+                <input type="text" id="uniqueCode" readonly class="w-full px-4 py-3 bg-white/5 border border-[var(--border)] rounded-xl text-gray-400 cursor-not-allowed outline-none">
             </div>
 
-            <button onclick="deploy()" class="btn-deploy" id="deployBtn">Deploy Site</button>
-            <div id="message"></div>
+            <button onclick="deploy()" class="w-full py-4 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold rounded-xl transition-all transform hover:-translate-y-1 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" id="deployBtn">Deploy Site</button>
+            <div id="message" class="hidden mt-4 p-4 rounded-lg text-center font-medium"></div>
         </div>
     </div>
+
 
     <script>
         const WORKER_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
@@ -274,13 +258,26 @@
             } catch (e) { console.error(e); }
         }
 
+
         function setMode(mode) {
             currentMode = mode;
-            document.getElementById('btn-mode-template').classList.toggle('active', mode === 'template');
-            document.getElementById('btn-mode-custom').classList.toggle('active', mode === 'custom');
-            document.getElementById('section-template').classList.toggle('hidden', mode !== 'template');
-            document.getElementById('section-custom').classList.toggle('hidden', mode !== 'custom');
+            const btnTemplate = document.getElementById('btn-mode-template');
+            const btnCustom = document.getElementById('btn-mode-custom');
+
+            if (mode === 'template') {
+                btnTemplate.className = 'flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors bg-[var(--bg-card)] text-[var(--accent)] shadow';
+                btnCustom.className = 'flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors text-gray-400 hover:text-white';
+                document.getElementById('section-template').classList.remove('hidden');
+                document.getElementById('section-custom').classList.add('hidden');
+            } else {
+                btnCustom.className = 'flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors bg-[var(--bg-card)] text-[var(--accent)] shadow';
+                btnTemplate.className = 'flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors text-gray-400 hover:text-white';
+                document.getElementById('section-template').classList.add('hidden');
+                document.getElementById('section-custom').classList.remove('hidden');
+                setTimeout(() => { if(editor) editor.refresh(); }, 50);
+            }
         }
+
 
         function updatePreview() {
             const input = document.getElementById('subdomain');
@@ -335,11 +332,13 @@
             }
         }
 
-        function loadFile(input, targetId) {
+        function loadFile(input) {
             const file = input.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) { document.getElementById(targetId).value = e.target.result; };
+            reader.onload = function(e) {
+                editor.setValue(e.target.result);
+            };
             reader.readAsText(file);
         }
 
@@ -419,50 +418,118 @@
 
             const payload = { subdomain, uniqueCode: userCode };
 
+
             if (currentMode === 'template') {
                 payload.templateName = document.getElementById('selectedTemplateName').value;
-                if (!payload.templateName) { showMessage('Please select a template.', 'error'); return; }
+                if (!payload.templateName) { showToast('Please select a template.', 'error'); return; }
             } else {
-                payload.customHtml = document.getElementById('customHtml').value;
+                payload.customHtml = editor.getValue();
                 payload.enableInjector = document.getElementById('enableInjector').checked;
                 payload.redirectUrl = document.getElementById('customRedirectUrl').value.trim();
-                if (!payload.customHtml) { showMessage('Please provide HTML content.', 'error'); return; }
+                if (!payload.customHtml) { showToast('Please provide HTML content.', 'error'); return; }
             }
 
             btn.innerText = 'Deploying...';
             btn.disabled = true;
-            showMessage('', '');
+
+
+            const token = localStorage.getItem('session_token');
+            const headers = {'Content-Type': 'application/json'};
+            if(token) headers['Authorization'] = `Bearer ${token}`;
 
             try {
                 const res = await fetch(`${WORKER_URL}/api/public/deploy`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: headers,
+
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
 
                 if (data.success) {
-                    showMessage('Success! Redirecting...', 'success');
-                    // Consume the pass upon successful deployment
                     localStorage.removeItem('deploy_ad_pass');
-                    setTimeout(() => window.location.href = data.url, 1500);
+                    btn.innerText = 'Deploy Site';
+                    btn.disabled = false;
+                    showSuccessModal(data.url);
                 } else {
-                    showMessage(data.error, 'error');
+                    showToast(data.error, 'error');
                     btn.disabled = false;
                     btn.innerText = 'Deploy Site';
                 }
             } catch (e) {
-                showMessage('Network Error: ' + e.message, 'error');
+                showToast('Network Error: ' + e.message, 'error');
                 btn.disabled = false;
                 btn.innerText = 'Deploy Site';
             }
+
+        }
+
+
+
+
+        let editor;
+
+        // Init CodeMirror
+        document.addEventListener('DOMContentLoaded', () => {
+            editor = CodeMirror.fromTextArea(document.getElementById('customHtml'), {
+                mode: "htmlmixed",
+                theme: "material-ocean",
+                lineNumbers: true,
+                autoCloseTags: true,
+                matchBrackets: true
+            });
+
+            // Refresh editor when switching to custom mode
+            document.getElementById('btn-mode-custom').addEventListener('click', () => {
+                setTimeout(() => editor.refresh(), 50);
+            });
+        });
+
+        function loadFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                editor.setValue(e.target.result);
+            };
+            reader.readAsText(file);
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.className = '';
+            toast.classList.add('show', type);
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
 
         function showMessage(text, type) {
-            const el = document.getElementById('message');
-            el.innerText = text;
-            el.className = type;
-            el.style.display = text ? 'block' : 'none';
+            if(text) showToast(text, type);
+        }
+
+        function showSuccessModal(url) {
+            const modal = document.getElementById('success-modal');
+            const content = document.getElementById('success-modal-content');
+            document.getElementById('deployed-url').innerText = url;
+
+            modal.classList.add('show');
+            setTimeout(() => {
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+        }
+
+        function closeSuccessModal() {
+            const modal = document.getElementById('success-modal');
+            modal.classList.remove('show');
+            // Reset form
+            document.getElementById('subdomain').value = '';
+            document.getElementById('url-preview').innerText = '';
+        }
+
+        function copyDeployedUrl() {
+            const url = document.getElementById('deployed-url').innerText;
+            navigator.clipboard.writeText(url).then(() => showToast('URL copied to clipboard!'));
         }
 
         // --- ADS ---
@@ -488,5 +555,31 @@
 
         loadTemplates();
     </script>
+
+    <div id="toast">Message</div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal-overlay">
+        <div class="glass-card p-8 rounded-2xl max-w-md w-full mx-4 text-center transform scale-95 transition-transform duration-300" id="success-modal-content">
+            <div class="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">Site Deployed!</h2>
+            <p class="text-gray-400 mb-6 text-sm">Your capture site is live and ready to receive traffic.</p>
+
+            <div class="bg-black/50 p-3 rounded-lg border border-[var(--border)] flex items-center justify-between mb-6">
+                <span id="deployed-url" class="text-[var(--accent)] font-mono text-sm truncate mr-2">https://...</span>
+                <button onclick="copyDeployedUrl()" class="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-400 hover:text-white" title="Copy URL">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                </button>
+            </div>
+
+            <div class="flex gap-3">
+                <a href="dashboard.html" class="flex-1 py-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl font-semibold hover:bg-white/5 transition-colors">Dashboard</a>
+                <button onclick="closeSuccessModal()" class="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-semibold hover:bg-[var(--accent-hover)] transition-colors">Deploy Another</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

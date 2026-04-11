@@ -5,330 +5,182 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>D-TECH CLOUD | Secure Login</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-color: #050505;
-            --card-bg: #111111;
-            --text-color: #ffffff;
-            --accent-color: #0070f3;
-            --accent-hover: #005bb5;
-            --border-color: #333;
-            --error-color: #ff4d4f;
-            --success-color: #17c964;
-        }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            background-color: #050505;
+            color: #ffffff;
         }
 
-        .container {
-            background-color: var(--card-bg);
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            border: 1px solid #222;
-            animation: fadeIn 0.5s ease-out;
-            position: relative;
+        .glass-card {
+            background: rgba(17, 17, 17, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        h1 {
-            color: var(--accent-color);
-            margin-bottom: 5px;
-            font-size: 2rem;
-            letter-spacing: -0.5px;
-        }
-
-        .subtitle {
-            color: #888;
-            font-size: 0.9rem;
-            margin-bottom: 25px;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            margin-bottom: 25px;
-            border-bottom: 1px solid var(--border-color);
+        .input-glow:focus {
+            box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.3);
+            border-color: #0070f3;
         }
 
         .tab-btn {
-            flex: 1;
-            padding: 12px;
-            background: none;
-            border: none;
-            color: #666;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
-        }
-
-        .tab-btn:hover { color: #fff; }
-        .tab-btn.active {
-            color: var(--accent-color);
-            border-bottom-color: var(--accent-color);
-        }
-
-        /* Forms */
-        .form-section { display: none; }
-        .form-section.active { display: block; animation: slideIn 0.3s ease; }
-
-        .input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-size: 12px;
-            color: #888;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            background-color: #0a0a0a;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: white;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            box-sizing: border-box;
-        }
-
-        input:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 2px rgba(0, 112, 243, 0.2);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 10px;
-        }
-
-        .btn-primary {
-            background-color: var(--accent-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.7;
-            cursor: not-allowed;
-        }
-
-        .btn-secondary {
-            background-color: #222;
-            color: #ccc;
-            font-size: 14px;
-            padding: 10px;
-        }
-
-        .btn-secondary:hover { background-color: #333; color: white; }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #888;
-        }
-
-        .checkbox-group input {
-            width: auto;
-            margin-right: 10px;
-        }
-
-        .footer {
-            margin-top: 30px;
-            font-size: 13px;
-            color: #555;
-            border-top: 1px solid #222;
-            padding-top: 20px;
-        }
-
-        .footer a {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
-
-        .error-msg {
-            color: var(--error-color);
-            font-size: 13px;
-            margin-bottom: 15px;
-            display: none;
-            background: rgba(255, 77, 79, 0.1);
-            padding: 10px;
-            border-radius: 6px;
-        }
-
-        /* Generated Code Display */
-        .code-display {
-            background: #1a1a1a;
-            border: 1px dashed var(--accent-color);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-            word-break: break-all;
-            font-family: monospace;
-            font-size: 1.1rem;
-            color: var(--accent-color);
             position: relative;
         }
 
-        .warning-text {
-            color: #f5a524;
-            font-size: 12px;
-            margin-top: 10px;
-            line-height: 1.4;
-            text-align: left;
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #0070f3;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
         }
 
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
+        .tab-btn.active::after {
+            transform: scaleX(1);
         }
 
-        .modal {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 350px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        .tab-btn.active {
+            color: #0070f3;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-section { display: none; }
+        .form-section.active { display: block; animation: slideIn 0.3s ease; }
+
         @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 50;
+            bottom: 30px;
+            right: 30px;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s, visibility 0.3s;
+            border-left: 4px solid #0070f3;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        #toast.success { border-color: #10b981; }
+        #toast.error { border-color: #ef4444; }
     </style>
+
 </head>
 <body>
 
-    <div class="container">
-        <h1>D-TECH CLOUD</h1>
-        <p class="subtitle">Secure Deployment Platform</p>
+    <div class="glass-card w-full max-w-md p-8 md:p-10 rounded-2xl shadow-2xl relative animate-[fadeIn_0.5s_ease-out]">
+        <h1 class="text-3xl font-extrabold text-[#0070f3] mb-1 tracking-tight">D-TECH CLOUD</h1>
+        <p class="text-gray-400 text-sm mb-8 font-medium">Secure Deployment Platform</p>
 
-        <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('login')">Sign In</button>
-            <button class="tab-btn" onclick="switchTab('register')">New Account</button>
-            <button class="tab-btn" onclick="switchTab('legacy')">Legacy</button>
+        <div class="flex mb-8 border-b border-gray-800">
+            <button class="tab-btn active flex-1 py-3 text-center text-sm font-semibold text-gray-500 hover:text-white transition-colors cursor-pointer outline-none" onclick="switchTab('login')">Sign In</button>
+            <button class="tab-btn flex-1 py-3 text-center text-sm font-semibold text-gray-500 hover:text-white transition-colors cursor-pointer outline-none" onclick="switchTab('register')">New Account</button>
+            <button class="tab-btn flex-1 py-3 text-center text-sm font-semibold text-gray-500 hover:text-white transition-colors cursor-pointer outline-none" onclick="switchTab('legacy')">Legacy</button>
         </div>
 
         <!-- LOGIN FORM -->
         <div id="tab-login" class="form-section active">
-            <div id="login-error" class="error-msg"></div>
+            <div id="login-error" class="error-msg text-red-500 text-sm mb-4 hidden bg-red-500/10 p-3 rounded-lg border border-red-500/20"></div>
             <form onsubmit="handleLogin(event)">
-                <div class="input-group">
-                    <label>Username</label>
-                    <input type="text" id="login-username" placeholder="Enter Username" required>
+                <div class="mb-5 text-left">
+                    <label class="block mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Username</label>
+                    <input type="text" class="w-full px-4 py-3 bg-[#0a0a0a] border border-gray-800 rounded-xl text-white text-sm outline-none transition-all input-glow" id="login-username" placeholder="Enter Username" required>
                 </div>
-                <div class="input-group">
-                    <label>Password (Unique Code)</label>
-                    <input type="password" id="login-password" placeholder="Enter your Secret Key" required>
+                <div class="mb-5 text-left">
+                    <label class="block mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Password (Unique Code)</label>
+                    <input type="password" class="w-full px-4 py-3 bg-[#0a0a0a] border border-gray-800 rounded-xl text-white text-sm outline-none transition-all input-glow" id="login-password" placeholder="Enter your Secret Key" required>
                 </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="login-remember">
-                    <label for="login-remember">Remember me</label>
+                <div class="flex items-center mb-6 text-sm text-gray-400">
+                    <input type="checkbox" class="w-4 h-4 text-[#0070f3] bg-gray-900 border-gray-700 rounded focus:ring-[#0070f3] focus:ring-2 accent-[#0070f3] mr-2" id="login-remember">
+                    <label for="login-remember" class="font-medium cursor-pointer">Remember me</label>
                 </div>
-                <button type="submit" class="btn btn-primary" id="btn-login">Access Dashboard</button>
+                <button type="submit" class="w-full py-3.5 bg-[#0070f3] hover:bg-[#005bb5] text-white font-semibold rounded-xl transition-all transform hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed mt-2" id="btn-login">Access Dashboard</button>
             </form>
         </div>
 
         <!-- REGISTER FORM -->
         <div id="tab-register" class="form-section">
-            <div id="register-error" class="error-msg"></div>
+            <div id="register-error" class="error-msg text-red-500 text-sm mb-4 hidden bg-red-500/10 p-3 rounded-lg border border-red-500/20"></div>
 
             <div id="register-step-1">
                 <p style="color:#aaa; font-size:13px; margin-bottom:20px;">Create a username to generate your secure access key.</p>
                 <form onsubmit="handleRegister(event)">
-                    <div class="input-group">
-                        <label>Choose Username</label>
-                        <input type="text" id="reg-username" placeholder="e.g. DtechUser24" minlength="3" required>
+                    <div class="mb-5 text-left">
+                        <label class="block mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Choose Username</label>
+                        <input type="text" class="w-full px-4 py-3 bg-[#0a0a0a] border border-gray-800 rounded-xl text-white text-sm outline-none transition-all input-glow" id="reg-username" placeholder="e.g. DtechUser24" minlength="3" required>
                     </div>
-                    <button type="submit" class="btn btn-primary" id="btn-register">Generate Key & Join</button>
+                    <button type="submit" class="w-full py-3.5 bg-[#0070f3] hover:bg-[#005bb5] text-white font-semibold rounded-xl transition-all transform hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed mt-2" id="btn-register">Generate Key & Join</button>
                 </form>
             </div>
 
             <div id="register-step-2" style="display:none;">
                 <p style="color:#17c964; font-weight:bold;">Account Created Successfully!</p>
-                <div class="code-display" id="new-code-display" onclick="copyCode(this.innerText)">
+                <div class="code-display bg-[#1a1a1a] border border-dashed border-[#0070f3] p-4 rounded-xl my-6 break-all font-mono text-lg text-[#0070f3] relative cursor-pointer hover:bg-[#222] transition-colors" id="new-code-display" onclick="copyCode(this.innerText)">
                     Generating...
                 </div>
-                <div class="warning-text">
+                <div class="warning-text text-amber-500 text-xs mt-3 leading-relaxed text-left bg-amber-500/10 p-3 rounded-lg border border-amber-500/20">
                     ⚠️ <strong>IMPORTANT:</strong> Save this Key immediately! It is your <u>Password</u>. If you lose it, you lose access to your account forever.
                 </div>
-                <button onclick="finishRegistration()" class="btn btn-primary" style="margin-top:20px;">I Saved It - Continue</button>
+                <button onclick="finishRegistration()" class="w-full py-3.5 bg-[#0070f3] hover:bg-[#005bb5] text-white font-semibold rounded-xl transition-all transform hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed mt-2" style="margin-top:20px;">I Saved It - Continue</button>
             </div>
         </div>
 
         <!-- LEGACY FORM -->
         <div id="tab-legacy" class="form-section">
             <p style="color:#aaa; font-size:13px; margin-bottom:20px;">For users who haven't set a username yet.</p>
-            <div id="legacy-error" class="error-msg"></div>
+            <div id="legacy-error" class="error-msg text-red-500 text-sm mb-4 hidden bg-red-500/10 p-3 rounded-lg border border-red-500/20"></div>
             <form onsubmit="handleLegacyLogin(event)">
-                <div class="input-group">
-                    <label>Unique Access Code</label>
-                    <input type="password" id="legacy-code" placeholder="Paste your Code here" required>
+                <div class="mb-5 text-left">
+                    <label class="block mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Unique Access Code</label>
+                    <input type="password" class="w-full px-4 py-3 bg-[#0a0a0a] border border-gray-800 rounded-xl text-white text-sm outline-none transition-all input-glow" id="legacy-code" placeholder="Paste your Code here" required>
                 </div>
-                <button type="submit" class="btn btn-secondary" id="btn-legacy">Login with Code</button>
+                <button type="submit" class="w-full py-3 bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white font-semibold rounded-xl transition-all mt-2 text-sm" id="btn-legacy">Login with Code</button>
             </form>
         </div>
 
-        <div class="footer">
+        <div class="mt-8 pt-6 border-t border-gray-800 text-xs text-gray-500 font-medium">
             &copy; 2024 D-TECH Global | <a href="admin-login.html">Admin</a>
         </div>
     </div>
 
+
     <!-- SET USERNAME MODAL -->
-    <div class="modal-overlay" id="username-modal">
-        <div class="modal">
-            <h3 style="margin-top:0; color:var(--accent-color);">Set Username</h3>
-            <p style="color:#ccc; font-size:14px;">To improve security, please set a username for your account.</p>
-            <div id="modal-error" class="error-msg"></div>
+    <div class="modal-overlay hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex justify-center items-center" id="username-modal">
+        <div class="glass-card p-8 rounded-2xl w-11/12 max-w-sm shadow-2xl border border-[var(--border)] relative">
+            <h3 class="mt-0 text-xl font-bold text-[#0070f3] mb-2">Set Username</h3>
+            <p class="text-gray-400 text-sm mb-6">To improve security, please set a username for your account.</p>
+            <div id="modal-error" class="error-msg text-red-500 text-sm mb-4 hidden bg-red-500/10 p-3 rounded-lg border border-red-500/20"></div>
             <form onsubmit="handleSetUsername(event)">
-                <div class="input-group">
-                    <label>New Username</label>
-                    <input type="text" id="modal-username" placeholder="Choose a username" minlength="3" required>
+                <div class="mb-5 text-left">
+                    <label class="block mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">New Username</label>
+                    <input type="text" id="modal-username" placeholder="Choose a username" minlength="3" required class="w-full px-4 py-3 bg-[#0a0a0a] border border-gray-800 rounded-xl text-white text-sm outline-none transition-all input-glow">
                 </div>
-                <button type="submit" class="btn btn-primary" id="btn-save-username">Save & Continue</button>
+                <button type="submit" class="w-full py-3.5 bg-[#0070f3] hover:bg-[#005bb5] text-white font-semibold rounded-xl transition-all transform hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed mt-2" id="btn-save-username">Save & Continue</button>
             </form>
         </div>
     </div>
+
 
     <script>
         const API_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
@@ -380,7 +232,7 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    saveSession(data.code, username, remember);
+                    saveSession(data.code, username, remember, data.sessionToken);
                     window.location.href = 'dashboard.html';
                 } else {
                     showError(errorEl, data.error || 'Login failed');
@@ -466,7 +318,7 @@
                         // worker.js: getUser(code) returns object.
                         // But login endpoint just returns { success, code }.
                         // We will just save code. Dashboard fetches profile and gets username.
-                        saveSession(code, null, true); // Username null for now
+                        saveSession(code, null, true, data.sessionToken); // Username null for now
                         window.location.href = 'dashboard.html';
                     }
                 } else {
@@ -511,6 +363,18 @@
         }
 
         // Helpers
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = ''; // Reset classes
+            toast.classList.add('show', type);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
         function generateUUID() {
             if(crypto.randomUUID) return crypto.randomUUID();
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -519,8 +383,10 @@
             });
         }
 
-        function saveSession(code, username, remember) {
+
+        function saveSession(code, username, remember, sessionToken) {
             localStorage.setItem('user_code', code);
+            if(sessionToken) localStorage.setItem('session_token', sessionToken);
             if(username) localStorage.setItem('user_name', username);
 
             if (remember) {
@@ -547,9 +413,13 @@
         }
 
         function copyCode(text) {
-            navigator.clipboard.writeText(text).then(() => alert('Code copied!'));
+            navigator.clipboard.writeText(text).then(() => showToast('Code copied to clipboard!', 'success'));
         }
     </script>
+
+
+    <!-- Toast Notification -->
+    <div id="toast">Message</div>
 
 </body>
 </html>

