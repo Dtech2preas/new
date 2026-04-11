@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-TECH Hub | Get a Voucher</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #050505;
+            --bg-card: #111111;
+            --text-main: #ffffff;
+            --text-sec: #888;
+            --accent: #0070f3;
+            --accent-hover: #005bb5;
+            --border: #222;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glass-card {
+            background: rgba(17, 17, 17, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #fff 0%, #aaa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pulse-border {
+            animation: pulse-border 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: var(--border); box-shadow: none; }
+            50% { border-color: var(--accent); box-shadow: 0 0 20px rgba(0, 112, 243, 0.3); }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="max-w-3xl mx-auto w-full p-6 md:p-12 mt-10 flex-grow">
+        <header class="flex items-center justify-between mb-12">
+            <div class="logo text-2xl font-extrabold tracking-tight">D-TECH <span class="text-[var(--accent)]">HUB</span></div>
+            <a href="dashboard.html" class="flex items-center gap-2 text-sm text-gray-400 hover:text-[var(--accent)] transition-colors font-medium bg-[var(--bg-card)] px-4 py-2 rounded-full border border-[var(--border)]">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                Back to Dashboard
+            </a>
+        </header>
+
+        <div class="glass-card rounded-3xl p-8 md:p-12 relative overflow-hidden text-center pulse-border">
+            <div class="absolute -top-32 -left-32 w-64 h-64 bg-[var(--accent)] rounded-full blur-[120px] opacity-20"></div>
+            <div class="absolute -bottom-32 -right-32 w-64 h-64 bg-[#2f81f7] rounded-full blur-[120px] opacity-10"></div>
+
+            <div class="relative z-10">
+                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-[var(--bg-card)] to-[var(--bg-main)] border border-[var(--border)] rounded-2xl flex items-center justify-center mb-6 shadow-2xl">
+                    <svg class="w-10 h-10 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                </div>
+
+                <h1 class="text-3xl md:text-5xl font-extrabold mb-6 gradient-text">How to get a D-Tech Voucher</h1>
+
+                <p class="text-gray-400 text-lg md:text-xl leading-relaxed mb-10 max-w-2xl mx-auto">
+                    D-Tech vouchers are used to pay for or extend your Hub plans.
+                    You can easily obtain these vouchers for free by using our official Telegram bot.
+                </p>
+
+                <div class="bg-[var(--bg-main)] border border-[var(--border)] rounded-2xl p-6 md:p-8 text-left mb-10 shadow-lg">
+                    <h3 class="text-xl font-bold mb-6 text-white flex items-center gap-2">
+                        <svg class="w-6 h-6 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        Steps to claim:
+                    </h3>
+
+                    <ul class="space-y-6">
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] flex items-center justify-center font-bold flex-shrink-0 mt-0.5 border border-[var(--accent)]/30">1</div>
+                            <div>
+                                <h4 class="font-semibold text-gray-200 mb-1">Open the D-TECH Bot</h4>
+                                <p class="text-sm text-gray-500">Go to our official Telegram bot using the link below.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] flex items-center justify-center font-bold flex-shrink-0 mt-0.5 border border-[var(--accent)]/30">2</div>
+                            <div>
+                                <h4 class="font-semibold text-gray-200 mb-1">Earn points by clicking ads</h4>
+                                <p class="text-sm text-gray-500">Interact with the bot and view ads to earn D-TECH credits.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] flex items-center justify-center font-bold flex-shrink-0 mt-0.5 border border-[var(--accent)]/30">3</div>
+                            <div>
+                                <h4 class="font-semibold text-gray-200 mb-1">Exchange for a Voucher</h4>
+                                <p class="text-sm text-gray-500">Once you have enough credits, exchange them directly for a 10R, 20R, or 30R voucher code.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4">
+                            <div class="w-8 h-8 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] flex items-center justify-center font-bold flex-shrink-0 mt-0.5 border border-[var(--accent)]/30">4</div>
+                            <div>
+                                <h4 class="font-semibold text-gray-200 mb-1">Upgrade your Plan</h4>
+                                <p class="text-sm text-gray-500">Return to the dashboard and enter the code to upgrade or extend your plan instantly.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <a href="https://t.me/dtechlog_bot/dtech" target="_blank" class="inline-flex items-center justify-center gap-3 bg-[#2AABEE] hover:bg-[#229ED9] text-white px-8 py-4 rounded-xl font-bold text-lg shadow-[0_10px_20px_-10px_rgba(42,171,238,0.5)] transition-all active:scale-95">
+                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.223-.548.223l.188-2.85 5.18-4.686c.223-.198-.054-.31-.346-.11l-6.4 4.02-2.76-.86c-.6-.188-.61-.6.126-.89l10.81-4.17c.5-.188.943.11.75 1.351z"/></svg>
+                    Open D-TECH Telegram Bot
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-8 text-center text-sm text-gray-600 border-t border-[var(--border)] bg-[var(--bg-main)]">
+        &copy; <span id="year"></span> D-TECH Hub. All rights reserved.
+    </footer>
+    <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
