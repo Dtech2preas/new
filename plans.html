@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="monetag" content="11fda623f808704a24728b96c85545b8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D-TECH Hub | Plans</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+
+    <style>
+        :root {
+            --bg-main: #050505;
+            --bg-card: #111111;
+            --text-main: #ffffff;
+            --text-sec: #888;
+            --accent: #0070f3;
+            --accent-hover: #005bb5;
+            --border: #222;
+            --success: #17c964;
+            --danger: #f31260;
+            --warning: #f5a524;
+            --radius: 12px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+
+        .glass-card {
+            background: rgba(17, 17, 17, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Basic Plan Theme */
+        body.plan-basic {
+            --bg-main: #0d1117;
+            --bg-card: #161b22;
+            --accent: #2f81f7;
+            --accent-hover: #58a6ff;
+            --border: #30363d;
+        }
+
+        /* Premium Plan Theme (High End) */
+        body.plan-premium {
+            --bg-main: #000000;
+            --bg-card: #0a0a0a;
+            --text-main: #f0f0f0;
+            --accent: #9b59b6;
+            --accent-hover: #8e44ad;
+            --border: #333;
+        }
+
+        /* Gold Plan Theme (Luxury) */
+        body.plan-gold {
+            --bg-main: #000000;
+            --bg-card: #0a0a0a;
+            --text-main: #fffdf0;
+            --accent: #ffd700;
+            --accent-hover: #ffea00;
+            --border: #444;
+        }
+
+        /* Gold Animated Gradient Text */
+        body.plan-gold .logo span, body.plan-gold .gold-text {
+            background: linear-gradient(to right, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            animation: shine 3s linear infinite;
+            background-size: 200%;
+        }
+
+        @keyframes shine { to { background-position: 200% center; } }
+
+        /* Smooth transitions */
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            border-color: var(--accent);
+        }
+
+        /* Desktop Sidebar Layout */
+        @media (min-width: 1024px) {
+            .app-layout {
+                display: flex;
+                min-height: 100vh;
+            }
+            .sidebar {
+                width: 260px;
+                flex-shrink: 0;
+                border-right: 1px solid var(--border);
+                background: var(--bg-card);
+                position: fixed;
+                height: 100vh;
+                overflow-y: auto;
+            }
+            .main-content {
+                flex-grow: 1;
+                margin-left: 260px;
+                padding: 32px;
+                max-width: calc(100vw - 260px);
+            }
+            .mobile-header {
+                display: none;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .sidebar {
+                display: none; /* Can be toggled with JS later if needed */
+            }
+            .main-content {
+                padding: 16px;
+                padding-bottom: 80px;
+            }
+        }
+
+        /* Smart Data Fields */
+        .smart-field { background: rgba(255,255,255,0.03); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column; }
+        .smart-key { font-size: 0.7rem; color: var(--text-sec); text-transform: uppercase; margin-bottom: 4px; font-weight: 700; letter-spacing: 0.5px; }
+        .smart-value { font-size: 0.95rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; color: var(--text-main); word-break: break-all; font-weight: 500;}
+
+        .plan-premium .smart-field { border-color: rgba(155, 89, 182, 0.3); background: rgba(155, 89, 182, 0.05); }
+        .plan-premium .smart-key { color: #bca0dc; }
+        .plan-gold .smart-field { border-color: rgba(255, 215, 0, 0.3); background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(0,0,0,0)); }
+        .plan-gold .smart-key { color: #ffd700; }
+
+        .copy-icon { cursor: pointer; opacity: 0.5; transition: 0.2s; float: right; margin-top: -18px;}
+        .copy-icon:hover { opacity: 1; color: var(--accent); }
+
+        /* Toast Notification */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 9999;
+            bottom: 30px;
+            right: 30px;
+            opacity: 0;
+            transition: opacity 0.3s, bottom 0.3s, visibility 0.3s;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        #toast.success { border-color: var(--success); }
+        #toast.error { border-color: var(--danger); }
+
+        /* Intro.js custom styling */
+        .introjs-tooltip {
+            background-color: var(--bg-card) !important;
+            color: var(--text-main) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5) !important;
+        }
+        .introjs-arrow.top { border-bottom-color: var(--border) !important; }
+        .introjs-arrow.bottom { border-top-color: var(--border) !important; }
+        .introjs-button {
+            background-color: var(--accent) !important;
+            color: white !important;
+            border: none !important;
+            text-shadow: none !important;
+            border-radius: 6px !important;
+            font-family: 'Inter', sans-serif !important;
+            font-weight: 600 !important;
+        }
+        .introjs-skipbutton { background-color: transparent !important; color: var(--text-sec) !important; border: 1px solid var(--border) !important; }
+        .introjs-bullets ul li a { background: #444 !important; }
+        .introjs-bullets ul li a.active { background: var(--accent) !important; }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-main); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        .loading-spinner {
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+
+</head>
+<body>
+
+
+    <div id="loader" style="display:none !important;" class="fixed inset-0 bg-[var(--bg-main)] z-[2000] flex flex-col justify-center items-center">
+        <div class="loading-spinner mb-4"></div>
+        <div class="text-[var(--accent)] font-semibold tracking-wide">Authenticating...</div>
+    </div>
+
+
+    <!-- Ad Overlay -->
+    <div id="ad-overlay" style="display: none;">
+        <h2 style="color: var(--accent);">Free Plan Access</h2>
+        <p>Support us by viewing this ad to access your data.<br>Access remains active for <strong>10 minutes</strong>.</p>
+        <br>
+        <a href="https://otieu.com/4/10588053" target="_blank" onclick="unlockDashboard()" class="ad-btn">👉 Click Here to Unlock 👈</a>
+    </div>
+
+
+    <div class="app-layout" id="main-content" style="display:none;">
+        <!-- Sidebar (Desktop) -->
+        <aside class="sidebar p-6 flex flex-col">
+            <div class="logo text-2xl font-extrabold tracking-tight mb-10">D-TECH <span class="text-[var(--accent)]">HUB</span></div>
+
+            <nav class="flex-1 space-y-2" id="tour-nav">
+                <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    Dashboard
+                </a>
+                <a href="deploy.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-colors" id="tour-deploy">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                    Deploy Site
+                </a>
+                <a href="profile.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    Profile
+                </a>
+                <a href="plans.html" class="flex items-center gap-3 px-4 py-3 bg-white/5 text-white rounded-xl font-medium transition-colors border border-[var(--border)]">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Plans
+                </a>
+            </nav>
+
+            <div class="mt-auto">
+                <div class="bg-black/30 p-4 rounded-xl border border-[var(--border)] mb-4 text-sm">
+                    <div class="text-gray-400 mb-1 text-xs uppercase font-bold tracking-wider">Current Plan</div>
+                    <div class="flex justify-between items-center">
+                        <span id="sidebar-plan" class="font-bold text-white">LOADING</span>
+                        <a href="plans.html" class="text-[var(--accent)] text-xs font-semibold hover:underline">Upgrade</a>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-colors border border-transparent hover:border-gray-800">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mobile Header -->
+            <header class="mobile-header flex justify-between items-center py-4 mb-6 border-b border-[var(--border)]">
+                <div class="logo text-xl font-extrabold tracking-tight">D-TECH <span class="text-[var(--accent)]">HUB</span></div>
+                <div class="flex items-center gap-3">
+                    <span id="plan-badge-mobile" class="px-3 py-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-xs font-bold uppercase">FREE</span>
+                    <button href="profile.html" class="text-gray-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+
+
+        </div>
+
+                <div class="profile-grid">
+                    <div class="stat-box">
+                        <span class="label">Status</span>
+                        <span class="value" id="profile-status" style="color:var(--success);">Active</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">Expires</span>
+                        <span class="value" id="profile-expiry">Never</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="label">Sites</span>
+                        <span class="value" id="profile-sites">0 / 1</span>
+                    </div>
+                </div>
+
+
+                <div class="profile-section">
+                    <h4 class="text-[var(--accent)] font-semibold mb-2">Data Retention Policy</h4>
+                    <p class="text-xs text-gray-500 mb-3">Auto-delete old captured data to save space and manage privacy.</p>
+                    <div class="flex gap-2">
+                        <select id="retention-select" class="bg-[var(--bg-card)] border border-[var(--border)] text-white text-sm rounded-lg p-2 focus:border-[var(--accent)] outline-none flex-1">
+                            <option value="7">7 Days (Default Free)</option>
+                            <option value="30">30 Days</option>
+                            <option value="90">90 Days (Gold)</option>
+                        </select>
+                        <button onclick="saveRetentionPolicy()" class="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">Save</button>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h4 class="font-semibold mb-3">Security Activity</h4>
+
+                    <div class="activity-log-wrapper">
+                        <table class="activity-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Action</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activity-list">
+                                <tr><td colspan="3" style="text-align:center; color:#666;">No activity recorded</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="profile-section" id="gold-settings" style="display:none;">
+                    <h4 style="color:var(--accent);">Gold Features</h4>
+                    <p style="font-size:0.8rem; color:#888;">Manage your dashboard preferences.</p>
+                    <button onclick="clearHiddenFields()" class="btn-action">Reset Hidden Fields</button>
+                    <button onclick="exportToGoogleSheets()" class="btn-action" style="background-color: #0f9d58; color: white;">Export to Google Sheets</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="locked-msg" class="hidden mb-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-500 backdrop-blur-md animate-[fadeIn_0.5s_ease]">
+            <h3>⛔ ACCOUNT LOCKED</h3>
+            <p>Your previous payment was declined. Access is restricted. Please submit a valid voucher.</p>
+        </div>
+
+        <div id="pending-msg" class="hidden mb-6 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-500 backdrop-blur-md animate-[fadeIn_0.5s_ease]">
+            <h3>⏳ GOLD UPGRADE PENDING</h3>
+            <p>Your Gold upgrade is currently being verified by an admin. In the meantime, you have full access to <strong>PREMIUM</strong> features!</p>
+        </div>
+
+        <div id="pending-premium-msg" class="hidden mb-6 p-4 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)] backdrop-blur-md animate-[fadeIn_0.5s_ease]">
+            <h3>⏳ PREMIUM UPGRADE PENDING</h3>
+            <p>Your Premium upgrade is currently being verified. In the meantime, you have full access to <strong>BASIC</strong> features!</p>
+        </div>
+
+
+        <!-- Upgrade Section -->
+        <div class="glass-card p-6 md:p-8 rounded-2xl shadow-xl mt-12 mb-8 border border-[var(--border)] relative overflow-hidden">
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-[var(--accent)] rounded-full blur-[100px] opacity-20"></div>
+
+            <div class="flex items-center justify-between mb-8 relative z-10">
+                <h3 class="text-2xl font-bold m-0 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Upgrade Plan
+                </h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 relative z-10">
+                <!-- Free Plan -->
+                <div class="p-6 bg-[var(--bg-main)] rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition-all duration-300 hover:-translate-y-1">
+                    <h4 class="text-lg font-bold mb-1 text-[var(--accent)]">Free Plan</h4>
+                    <p class="text-sm text-gray-500 mb-4">Current Default</p>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>1 Deployment Max</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>5 Visible Captures</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Standard SSL</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Includes Ads</li>
+                    </ul>
+                </div>
+
+                <!-- Basic Plan -->
+                <div class="p-6 bg-[var(--bg-main)] rounded-xl border border-[var(--border)] hover:border-[#2f81f7] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#2f81f7]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <h4 class="text-lg font-bold mb-1 text-[#2f81f7]">Basic Plan</h4>
+                    <p class="text-sm font-semibold text-white mb-4">10R <span class="text-xs text-gray-500 font-normal">/ 30 Days</span></p>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>3 Deployments Max</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>15 Visible Captures</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Extended Retention</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>No Ads</li>
+                    </ul>
+                </div>
+
+                <!-- Premium Plan -->
+                <div class="p-6 bg-[var(--bg-main)] rounded-xl border border-[var(--border)] hover:border-[#9b59b6] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-br from-[#9b59b6]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <h4 class="text-lg font-bold mb-1 text-[#9b59b6]">Premium Plan</h4>
+                    <p class="text-sm font-semibold text-white mb-4">20R <span class="text-xs text-gray-500 font-normal">/ 30 Days</span></p>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#9b59b6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>10 Deployments Max</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#9b59b6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>250 Visible Captures</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#9b59b6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Priority Routing</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#9b59b6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Support Included</li>
+                    </ul>
+                </div>
+
+                <!-- Gold Plan -->
+                <div class="p-6 rounded-xl border border-[#d4af37]/40 bg-gradient-to-br from-[#d4af37]/10 to-black hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 bg-gradient-to-l from-[#d4af37] to-[#ffd700] text-black text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
+                    <h4 class="text-lg font-bold mb-1 text-transparent bg-clip-text bg-gradient-to-r from-[#ffd700] to-[#d4af37]">GOLD MEMBERSHIP</h4>
+                    <p class="text-sm font-semibold text-white mb-4">30R <span class="text-xs text-gray-300 font-normal">/ 30 Days</span></p>
+                    <ul class="space-y-2 text-sm text-gray-200">
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#ffd700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Unlimited Deployments*</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#ffd700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Unlimited Captures</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#ffd700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Exclusive Templates</li>
+                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#ffd700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Anti-Bot Protection</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-[var(--border)] pt-8 mt-4 relative z-10">
+                <div class="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                    <div>
+                        <h4 class="font-semibold text-white mb-1">Select your upgrade</h4>
+                        <p class="text-sm text-gray-400">Advance payments stack your expiry date.</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                        <div class="relative w-full sm:w-64">
+                            <select id="target-plan" class="w-full appearance-none bg-[var(--bg-main)] border border-[var(--border)] text-white text-sm rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-[var(--accent)] transition-colors cursor-pointer font-medium">
+                                <option value="basic">Basic (10R / 30 Days)</option>
+                                <option value="premium">Premium (20R / 30 Days)</option>
+                                <option value="gold" selected>GOLD (30R / 30 Days)</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                        <button onclick="submitPayment()" id="btn-pay" class="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[var(--accent)]/20 transition-all active:scale-95 whitespace-nowrap">
+                            Pay / Extend
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <a href="dtech.html" class="inline-flex items-center gap-2 text-sm text-[var(--accent)] hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        How to get a D-Tech voucher?
+                    </a>
+                </div>
+                <p id="pay-msg" class="text-sm text-[var(--danger)] mt-3 text-right hidden"></p>
+            </div>
+        </div>
+            </main>
+    </div>
+
+    <div id="toast">Message</div>
+
+    <script>
+        const WORKER_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
+        const userCode = localStorage.getItem('user_code');
+
+        // Auth Check
+        if (!userCode) {
+            window.location.href = 'index.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('main-content').style.display = '';
+
+            // Check for payment return
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status');
+            const token = urlParams.get('token');
+            const order_id = urlParams.get('order_id');
+
+            if (status === 'success' && token && order_id) {
+                document.getElementById('loader').innerText = 'Verifying Payment...';
+                document.getElementById('loader').style.display = 'flex';
+                try {
+                    const verifyRes = await fetch(`${WORKER_URL}/api/pay/verify`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token, order_id })
+                    });
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.success) {
+                        notify("Payment verified! Your account has been upgraded.", "success");
+                    } else {
+                        notify(verifyData.error || "Payment verification failed.", "error");
+                    }
+                } catch (e) {
+                    notify("Network error during verification.", "error");
+                }
+
+                // Clean up URL
+                const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                window.history.pushState({ path: newUrl }, '', newUrl);
+            }
+
+            fetchUserData();
+        });
+
+        async function fetchUserData() {
+            try {
+                const token = localStorage.getItem('session_token');
+                const headers = {};
+                if(token) headers['Authorization'] = `Bearer ${token}`;
+
+                // Just fetch captures to get user details for now (since it's a bundled endpoint)
+                const res = await fetch(`${WORKER_URL}/api/public/captures?code=${encodeURIComponent(userCode)}&page=1&limit=1`, {
+                    headers: headers
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    updateUI(result);
+                } else {
+                    notify(result.error || 'Failed to load user data', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function updateUI(data) {
+            const plan = data.plan || 'free';
+            document.body.className = `plan-${plan}`;
+
+            const badgeM = document.getElementById('plan-badge-mobile');
+            const badgeS = document.getElementById('sidebar-plan');
+            if(badgeM) badgeM.innerText = plan.toUpperCase();
+            if(badgeS) badgeS.innerText = plan.toUpperCase();
+
+            if (data.pendingPlan === 'gold') {
+                const msg = document.getElementById('pending-msg');
+                if(msg) msg.style.display = 'block';
+            }
+
+            if (data.pendingPlan === 'premium') {
+                const msg = document.getElementById('pending-premium-msg');
+                if(msg) msg.style.display = 'block';
+            }
+
+            const lockedMsg = document.getElementById('locked-msg');
+            if (!data.success && data.error === "Account Locked") {
+                if(lockedMsg) lockedMsg.style.display = 'block';
+            }
+        }
+
+        async function submitPayment() {
+            const btn = document.getElementById('btn-pay');
+            const msg = document.getElementById('pay-msg');
+            const plan = document.getElementById('target-plan').value;
+
+            let amount = 30;
+            if (plan === 'basic') amount = 10;
+            if (plan === 'premium') amount = 20;
+
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+            if(msg) msg.innerText = "";
+
+            try {
+                const res = await fetch(`${WORKER_URL}/api/pay/initiate`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        uniqueCode: userCode,
+                        plan: plan,
+                        amount: amount,
+                        returnUrl: window.location.href.split('?')[0]
+                    })
+                });
+                const data = await res.json();
+
+                if(data.success && data.redirectUrl) {
+                    window.location.href = data.redirectUrl;
+                } else {
+                    notify(data.error || "Failed to initiate payment", "error");
+                    btn.disabled = false;
+                    btn.innerText = "Pay / Extend";
+                }
+            } catch(e) {
+                notify("Network Error", "error");
+                btn.disabled = false;
+                btn.innerText = "Pay / Extend";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('user_code');
+            localStorage.removeItem('session_token');
+            window.location.href = 'index.html';
+        }
+
+        function notify(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            if(!toast) return;
+            toast.innerText = msg;
+            toast.className = '';
+            toast.classList.add('show', type);
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+</script>
+
+
+</body>
+</html>
