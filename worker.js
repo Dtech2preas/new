@@ -241,7 +241,12 @@ async function saveUser(env, code, data) {
 function extractBodyParts(html) {
     const match = html.match(/<body([^>]*)>([\s\S]*)<\/body>/i);
     if (match) return { attrs: match[1], content: match[2] };
-    return { attrs: '', content: html };
+
+    let stripped = html;
+    stripped = stripped.replace(/<!doctype[^>]*>/i, '');
+    stripped = stripped.replace(/<html[^>]*>|<\/html>/ig, '');
+    stripped = stripped.replace(/<head[^>]*>[\s\S]*<\/head>/i, '');
+    return { attrs: '', content: stripped.trim() };
 }
 
 // --- HANDLERS ---
@@ -545,14 +550,18 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 const p1 = extractBodyParts(templateData.content);
                 const p2 = extractBodyParts(templateData.contentStage2);
 
-                // Get head from Stage 1
-                const headMatch = templateData.content.match(/<head[^>]*>([\s\S]*)<\/head>/i);
-                const head = headMatch ? headMatch[1] : '';
+                // Get head from Stage 1 and Stage 2
+                const headMatch1 = templateData.content.match(/<head[^>]*>([\s\S]*)<\/head>/i);
+                const head1 = headMatch1 ? headMatch1[1] : '';
+
+                const headMatch2 = templateData.contentStage2.match(/<head[^>]*>([\s\S]*)<\/head>/i);
+                const head2 = headMatch2 ? headMatch2[1] : '';
 
                 htmlContent = `<!DOCTYPE html>
 <html>
 <head>
-${head}
+${head1}
+${head2}
 <style>#dtech-stage-2 { display: none; }</style>
 </head>
 <body${p1.attrs}>
