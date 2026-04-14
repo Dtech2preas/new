@@ -164,7 +164,17 @@ export default {
         }
 
         if (data.type === 'HTML') {
-          return new Response(data.content, {
+          let serveContent = data.content;
+
+          if (data.isMultiStage && url.pathname === '/stage2') {
+              serveContent = data.contentStage2;
+          } else if (url.pathname !== '/') {
+              // Redirect everything else to root to avoid 404s on SPA routing
+              // or just serve root. We'll just serve root.
+              serveContent = data.content;
+          }
+
+          return new Response(serveContent, {
             headers: { 'Content-Type': 'text/html' }
           });
         }
@@ -544,33 +554,10 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 return jsonError(`You have reached the limit (3) for deploying this specific template.`);
             }
 
-            // Check for Multi-Stage
+            htmlContent = templateData.content;
             if (templateData.contentStage2) {
                 isMultiStage = true;
-                const p1 = extractBodyParts(templateData.content);
-                const p2 = extractBodyParts(templateData.contentStage2);
-
-                // Get head from Stage 1 and Stage 2
-                const headMatch1 = templateData.content.match(/<head[^>]*>([\s\S]*)<\/head>/i);
-                const head1 = headMatch1 ? headMatch1[1] : '';
-
-                const headMatch2 = templateData.contentStage2.match(/<head[^>]*>([\s\S]*)<\/head>/i);
-                const head2 = headMatch2 ? headMatch2[1] : '';
-
-                htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-${head1}
-${head2}
-<style>#dtech-stage-2 { display: none; }</style>
-</head>
-<body${p1.attrs}>
-<div id="dtech-stage-1">${p1.content}</div>
-<div id="dtech-stage-2" style="display:none;">${p2.content}</div>
-</body>
-</html>`;
-            } else {
-                htmlContent = templateData.content;
+                htmlContentStage2 = templateData.contentStage2;
             }
 
             redirectUrl = templateData.redirectUrl || null;
@@ -580,6 +567,10 @@ ${head2}
         } else if (customHtml) {
             htmlContent = customHtml;
             shouldInject = (enableInjector === true);
+            if (customHtmlStage2) {
+                isMultiStage = true;
+                htmlContentStage2 = customHtmlStage2;
+            }
             if (!redirectUrl) redirectUrl = null;
         } else {
             return jsonError("Must provide a template or custom HTML");
@@ -588,33 +579,52 @@ ${head2}
         const scriptUrl = '/api/js/injection.js'; // Use internal route
 
         if (shouldInject) {
-            let injectionBlock = `<script>window.UNIQUE_CODE = ${JSON.stringify(uniqueCode)};</script>`;
-
+            let baseInjection = `<script>window.UNIQUE_CODE = ${JSON.stringify(uniqueCode)};</script>`;
             if (redirectUrl) {
-                injectionBlock += `<script>window.REDIRECT_URL = ${JSON.stringify(redirectUrl)};</script>`;
+                baseInjection += `<script>window.REDIRECT_URL = ${JSON.stringify(redirectUrl)};</script>`;
             }
+
+            let injectionBlock1 = baseInjection;
+            let injectionBlock2 = baseInjection;
 
             if (isMultiStage) {
-                injectionBlock += `<script>window.MULTI_STAGE = true;</script>`;
+                injectionBlock1 += `<script>window.MULTI_STAGE = true; window.CURRENT_STAGE = 1;</script>`;
+                injectionBlock2 += `<script>window.MULTI_STAGE = true; window.CURRENT_STAGE = 2;</script>`;
+            } else {
+                injectionBlock1 += `<script>window.CURRENT_STAGE = 1;</script>`;
             }
 
-            injectionBlock += `<script src="${scriptUrl}"></script>`;
+            injectionBlock1 += `<script src="${scriptUrl}"></script>`;
+            injectionBlock2 += `<script src="${scriptUrl}"></script>`;
 
             if (htmlContent.includes('</body>')) {
-                htmlContent = htmlContent.replace('</body>', `${injectionBlock}</body>`);
+                htmlContent = htmlContent.replace('</body>', `${injectionBlock1}</body>`);
             } else {
-                htmlContent += injectionBlock;
+                htmlContent += injectionBlock1;
+            }
+
+            if (isMultiStage && htmlContentStage2) {
+                if (htmlContentStage2.includes('</body>')) {
+                    htmlContentStage2 = htmlContentStage2.replace('</body>', `${injectionBlock2}</body>`);
+                } else {
+                    htmlContentStage2 += injectionBlock2;
+                }
             }
         }
 
-        await env.SUBDOMAINS.put(subdomain, JSON.stringify({
+        const storeData = {
             type: 'HTML',
             content: htmlContent,
             updated: Date.now(),
             ownerCode: uniqueCode,
             isInjected: shouldInject,
-            templateName: actualTemplateName
-        }));
+            templateName: actualTemplateName,
+            isMultiStage: isMultiStage
+        };
+        if (isMultiStage) {
+            storeData.contentStage2 = htmlContentStage2;
+        }
+        await env.SUBDOMAINS.put(subdomain, JSON.stringify(storeData));
 
         currentSites.push({
             subdomain,
