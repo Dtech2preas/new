@@ -610,85 +610,91 @@ ${head}
 
 
 async function handleGetPublicCaptures(request, env) {
-    const code = await verifySessionToken(request, env);
-    if (!code) return jsonError("Unauthorized: Invalid or expired session", 401);
+    try {
+
+        const code = await verifySessionToken(request, env);
+        if (!code) return jsonError("Unauthorized: Invalid or expired session", 401);
 
 
-    const user = await getUser(env, code);
-    if (user.status === 'locked' || user.status === 'banned') {
-         return new Response(JSON.stringify({
-             success: false,
-             error: "Account Locked",
-             accountStatus: user.status
-         }), { headers: { 'Content-Type': 'application/json' } });
-    }
-
-    const mapKey = `code_map::${code}`;
-    const codeMap = await env.SUBDOMAINS.get(mapKey, { type: "json" });
-    let siteCount = 0;
-    let sites = [];
-
-    if (codeMap) {
-        if (Array.isArray(codeMap.sites)) {
-            sites = codeMap.sites;
-            siteCount = sites.length;
-        } else if (codeMap.subdomain) {
-            sites = [{ subdomain: codeMap.subdomain, created: codeMap.created }];
-            siteCount = 1;
+        const user = await getUser(env, code);
+        if (user.status === 'locked' || user.status === 'banned') {
+             return new Response(JSON.stringify({
+                 success: false,
+                 error: "Account Locked",
+                 accountStatus: user.status
+             }), { headers: { 'Content-Type': 'application/json' } });
         }
+
+        const mapKey = `code_map::${code}`;
+        const codeMap = await env.SUBDOMAINS.get(mapKey, { type: "json" });
+        let siteCount = 0;
+        let sites = [];
+
+        if (codeMap) {
+            if (Array.isArray(codeMap.sites)) {
+                sites = codeMap.sites;
+                siteCount = sites.length;
+            } else if (codeMap.subdomain) {
+                sites = [{ subdomain: codeMap.subdomain, created: codeMap.created }];
+                siteCount = 1;
+            }
+        }
+
+        const list = await env.SUBDOMAINS.list({ prefix: `capture::${code}::` });
+        const keys = list.keys.reverse();
+        const totalCount = keys.length;
+
+        // 1. Plan Limits (Total Visible Cap)
+        let planLimit = 5;
+        if (user.plan === 'basic') planLimit = 15;
+        if (user.plan === 'premium') planLimit = 250;
+        if (user.plan === 'gold') planLimit = 100000;
+
+        const visibleKeys = keys.slice(0, planLimit);
+        const hiddenCount = Math.max(0, totalCount - planLimit);
+
+        // 2. Pagination Logic
+        const url = new URL(request.url);
+        const page = parseInt(url.searchParams.get('page')) || 1;
+        const perPage = parseInt(url.searchParams.get('limit')) || 10;
+        const startIndex = (page - 1) * perPage;
+        const endIndex = startIndex + perPage;
+
+        const paginatedKeys = visibleKeys.slice(startIndex, endIndex);
+
+        const promises = paginatedKeys.map(async (k) => {
+            const val = await env.SUBDOMAINS.get(k.name, { type: "json" });
+            return { key: k.name, ...val };
+        });
+
+        const results = await Promise.all(promises);
+
+        return new Response(JSON.stringify({
+            success: true,
+            data: results,
+            pagination: {
+                page: page,
+                perPage: perPage,
+                totalVisible: visibleKeys.length,
+                totalPages: Math.ceil(visibleKeys.length / perPage)
+            },
+
+            total: totalCount,
+            hidden: hiddenCount,
+            plan: user.plan,
+            username: user.username,
+            activityLog: user.activityLog || [],
+            pendingPlan: user.pendingPlan,
+            retentionDays: user.retentionDays || null,
+            expiry: user.expiry,
+
+            lastPayment: user.lastPaymentDate,
+            siteCount: siteCount,
+            sites: sites
+        }), { headers: { 'Content-Type': 'application/json' } });
+    } catch (e) {
+        return jsonError(e.message, 500);
     }
-
-    const list = await env.SUBDOMAINS.list({ prefix: `capture::${code}::` });
-    const keys = list.keys.reverse();
-    const totalCount = keys.length;
-
-    // 1. Plan Limits (Total Visible Cap)
-    let planLimit = 5;
-    if (user.plan === 'basic') planLimit = 15;
-    if (user.plan === 'premium') planLimit = 250;
-    if (user.plan === 'gold') planLimit = 100000;
-
-    const visibleKeys = keys.slice(0, planLimit);
-    const hiddenCount = Math.max(0, totalCount - planLimit);
-
-    // 2. Pagination Logic
-    const page = parseInt(url.searchParams.get('page')) || 1;
-    const perPage = parseInt(url.searchParams.get('limit')) || 10;
-    const startIndex = (page - 1) * perPage;
-    const endIndex = startIndex + perPage;
-
-    const paginatedKeys = visibleKeys.slice(startIndex, endIndex);
-
-    const promises = paginatedKeys.map(async (k) => {
-        const val = await env.SUBDOMAINS.get(k.name, { type: "json" });
-        return { key: k.name, ...val };
-    });
-
-    const results = await Promise.all(promises);
-
-    return new Response(JSON.stringify({
-        success: true,
-        data: results,
-        pagination: {
-            page: page,
-            perPage: perPage,
-            totalVisible: visibleKeys.length,
-            totalPages: Math.ceil(visibleKeys.length / perPage)
-        },
-
-        total: totalCount,
-        hidden: hiddenCount,
-        plan: user.plan,
-        username: user.username,
-        activityLog: user.activityLog || [],
-        pendingPlan: user.pendingPlan,
-        retentionDays: user.retentionDays || null,
-        expiry: user.expiry,
-
-        lastPayment: user.lastPaymentDate,
-        siteCount: siteCount,
-        sites: sites
-    }), { headers: { 'Content-Type': 'application/json' } });
 }
 
 async function handleDeletePublicSite(request, env) {
