@@ -3,13 +3,14 @@
 <head>
     <meta name="monetag" content="11fda623f808704a24728b96c85545b8">
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D-TECH Hub | Deploy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>D-TECH Hub | Secure Deploy</title>
 
+    <!-- Tailwind + Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- CodeMirror for Custom HTML -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    
+    <!-- CodeMirror (Custom HTML) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-ocean.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
@@ -19,567 +20,638 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/htmlmixed/htmlmixed.min.js"></script>
 
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
-            --bg-main: #050505;
-            --bg-card: #111111;
-            --text-main: #ffffff;
-            --text-sec: #888;
-            --accent: #0070f3;
-            --accent-hover: #005bb5;
-            --border: #222;
-            --success: #17c964;
-            --danger: #f31260;
-            --warning: #f5a524;
-            --radius: 12px;
+            --bg-deep: #03050b;
+            --bg-elevated: #0a0e1a;
+            --bg-card: #0f1322;
+            --border-glow: rgba(0, 112, 243, 0.3);
+            --accent-primary: #2b6ef0;
+            --accent-glow: #3b82f6;
+            --text-primary: #f0f3fa;
+            --text-secondary: #8a94b0;
+            --success: #10b981;
+            --danger: #ef4444;
+            --gold: #f5b042;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
+            background: radial-gradient(circle at 20% 30%, #070b14, #020409);
+            color: var(--text-primary);
+            min-height: 100vh;
         }
 
-        .glass-card {
-            background: rgba(17, 17, 17, 0.6);
+        /* Animated grid background */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(43, 110, 240, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(43, 110, 240, 0.05) 1px, transparent 1px);
+            background-size: 48px 48px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .glass-panel {
+            background: rgba(15, 19, 34, 0.75);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(43, 110, 240, 0.2);
+            border-radius: 1.75rem;
+            box-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Basic Plan Theme */
-        body.plan-basic { --bg-main: #0d1117; --bg-card: #161b22; --accent: #2f81f7; --accent-hover: #58a6ff; --border: #30363d; }
-        /* Premium Plan Theme */
-        body.plan-premium { --bg-main: #000000; --bg-card: #0a0a0a; --text-main: #f0f0f0; --accent: #9b59b6; --accent-hover: #8e44ad; --border: #333; }
-        /* Gold Plan Theme */
-        body.plan-gold { --bg-main: #000000; --bg-card: #0a0a0a; --text-main: #fffdf0; --accent: #ffd700; --accent-hover: #ffea00; --border: #444; }
+        .input-modern {
+            background: #090c17;
+            border: 1px solid #1e243b;
+            transition: all 0.2s ease;
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
+            color: white;
+        }
+        .input-modern:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(43, 110, 240, 0.2);
+            outline: none;
+        }
 
-        .CodeMirror {
-            height: 300px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-            font-size: 13px;
+        /* Template Grid */
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
         }
 
         .template-card {
-            transition: all 0.2s ease;
+            background: #0a0e1a;
+            border-radius: 1.25rem;
+            border: 1px solid #1e293b;
+            overflow: hidden;
+            transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            cursor: pointer;
+            position: relative;
         }
         .template-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5);
-            border-color: var(--accent);
+            transform: translateY(-6px);
+            border-color: var(--accent-primary);
+            box-shadow: 0 18px 30px -12px rgba(0, 112, 243, 0.25);
         }
         .template-card.selected {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px var(--accent);
+            border: 2px solid var(--accent-primary);
+            box-shadow: 0 0 0 1px rgba(43, 110, 240, 0.6), 0 12px 24px -12px #2b6ef0;
+        }
+        .template-card.disabled {
+            opacity: 0.65;
+            filter: grayscale(0.2);
+            cursor: not-allowed;
+        }
+        .template-card.disabled:hover {
+            transform: none;
+            border-color: #1e293b;
         }
 
-        /* Toast Notification */
-        #toast {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: var(--bg-card);
-            color: var(--text-main);
+        .preview-img-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            background: #00000040;
+            overflow: hidden;
+        }
+        .preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+        .template-card:hover .preview-img {
+            transform: scale(1.02);
+        }
+        .gold-badge, .locked-badge {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: linear-gradient(135deg, #f5b042, #e98a2e);
+            color: #0a0a0a;
+            font-weight: bold;
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 30px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            letter-spacing: 0.5px;
+            z-index: 3;
+        }
+        .locked-badge {
+            background: #2d3748;
+            color: #b9c3e0;
+        }
+        .template-info {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            background: rgba(10, 14, 26, 0.8);
+        }
+        .template-name {
+            font-weight: 700;
+            font-size: 1rem;
+            letter-spacing: -0.2px;
+        }
+        .preview-btn {
+            background: rgba(43, 110, 240, 0.15);
+            border: 1px solid rgba(43, 110, 240, 0.4);
+            padding: 0.3rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            transition: 0.2s;
+            color: #bdd3ff;
+        }
+        .preview-btn:hover {
+            background: #2b6ef0;
+            color: white;
+            border-color: #2b6ef0;
+        }
+
+        /* Toggle Switch Modern */
+        .mode-toggle {
+            background: rgba(5, 10, 22, 0.7);
+            border-radius: 2rem;
+            padding: 4px;
+            display: flex;
+            gap: 6px;
+            border: 1px solid #252f44;
+        }
+        .mode-option {
+            flex: 1;
             text-align: center;
-            border-radius: 8px;
-            padding: 16px;
-            position: fixed;
-            z-index: 9999;
-            bottom: 30px;
-            right: 30px;
-            opacity: 0;
-            transition: opacity 0.3s, bottom 0.3s, visibility 0.3s;
-            border-left: 4px solid var(--accent);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            padding: 10px 0;
+            border-radius: 2rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #8a94b0;
         }
-        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
-        #toast.success { border-color: var(--success); }
-        #toast.error { border-color: var(--danger); }
+        .mode-option.active {
+            background: var(--accent-primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(43,110,240,0.4);
+        }
 
-        /* Success Modal Overlay */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
-            z-index: 10000; display: none; justify-content: center; align-items: center;
-            opacity: 0; transition: opacity 0.3s ease;
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
         }
-        .modal-overlay.show { opacity: 1; display: flex; }
+        ::-webkit-scrollbar-track {
+            background: #0a0e1a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2b6ef0;
+            border-radius: 10px;
+        }
+
+        .status-pill {
+            background: rgba(0,0,0,0.5);
+            border-radius: 40px;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.8rem;
+        }
+        .btn-primary {
+            background: linear-gradient(105deg, #2b6ef0, #1a4fcf);
+            transition: all 0.2s;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 20px -12px #2b6ef0;
+            filter: brightness(1.05);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
-
 </head>
-<body>
+<body class="relative">
+<div class="grid-bg"></div>
 
-    <!-- Ad Overlay -->
-    <div id="ad-overlay" style="display: none;">
-        <h2 style="color: var(--accent);">Deploy Access</h2>
-        <p>Support us by viewing this ad to unlock <strong>1 Deployment</strong>.</p>
-        <br>
-        <a href="https://otieu.com/4/10588053" target="_blank" onclick="unlockDeploy()" class="ad-btn">👉 Click Here to Unlock 👈</a>
-    </div>
-
-
-    <div class="max-w-4xl mx-auto p-4 md:p-8" id="main-content">
-        <header class="flex items-center mb-8 pb-4 border-b border-[var(--border)]">
-            <a href="dashboard.html" class="back-link mr-4 flex items-center gap-2 text-gray-400 hover:text-[var(--accent)] transition-colors font-medium">
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+<div class="relative z-10 max-w-6xl mx-auto px-4 py-6 md:py-10">
+    <!-- Header with tech vibe -->
+    <div class="flex flex-wrap justify-between items-center mb-8 pb-3 border-b border-white/10">
+        <div class="flex items-center gap-4">
+            <a href="dashboard.html" class="flex items-center gap-2 text-gray-400 hover:text-[#2b6ef0] transition-all font-medium text-sm bg-white/5 px-4 py-2 rounded-full">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 Dashboard
             </a>
-            <h1 class="text-2xl font-bold">Deploy New Site</h1>
-        </header>
+            <h1 class="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-blue-400 bg-clip-text text-transparent">Deploy<span class="text-blue-500">.</span>io</h1>
+        </div>
+        <div class="text-xs font-mono text-gray-500 bg-black/30 px-3 py-1.5 rounded-full border border-white/5">SECURE CAPTURE NODE</div>
+    </div>
 
-        <div class="glass-card p-6 md:p-10 rounded-2xl shadow-xl">
+    <!-- Main Card -->
+    <div class="glass-panel p-5 md:p-8">
+        <!-- Account usage indicator will be injected here via JS (dynamic) -->
+        <div id="dynamic-usage-area" class="mb-6"></div>
 
+        <!-- Mode Toggle (Template / Custom) -->
+        <div class="mode-toggle w-full max-w-sm mx-auto mb-8">
+            <div id="btn-mode-template" class="mode-option active" onclick="setMode('template')">📁 Use Template</div>
+            <div id="btn-mode-custom" class="mode-option" onclick="setMode('custom')">🛠️ Custom HTML</div>
+        </div>
 
-
-        <div class="glass-card p-6 md:p-10 rounded-2xl shadow-xl">
-            <div class="flex bg-white/5 p-1.5 rounded-xl mb-8">
-                <div id="btn-mode-template" class="flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors bg-[var(--bg-card)] text-[var(--accent)] shadow" onclick="setMode('template')">Use Template</div>
-                <div id="btn-mode-custom" class="flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors text-gray-400 hover:text-white" onclick="setMode('custom')">Custom HTML</div>
+        <!-- TEMPLATE SECTION -->
+        <div id="section-template">
+            <div class="flex justify-between items-center mb-4">
+                <label class="text-sm font-semibold tracking-wide text-gray-300 uppercase flex items-center gap-2"><span class="w-2 h-2 bg-blue-500 rounded-full"></span> Premium Templates</label>
+                <span class="text-[11px] text-gray-500 bg-black/30 px-2 py-1 rounded-full">click to select</span>
             </div>
-
-            <div id="section-template" class="form-group">
-
-                <label>Select Template</label>
-                <input type="hidden" id="selectedTemplateName">
-                <div id="templateGrid" class="template-grid">
-                    <div style="padding: 20px; color: var(--text-sec);">Loading templates...</div>
-                </div>
+            <div id="templateGrid" class="template-grid min-h-[280px]">
+                <div class="col-span-full text-center py-12 text-gray-500">Loading tactical templates...</div>
             </div>
+            <input type="hidden" id="selectedTemplateName">
+        </div>
 
-
-            <div id="section-custom" class="form-group hidden">
-                <label class="block mb-2 text-sm font-semibold text-gray-300">Custom HTML Content</label>
-                <div class="mb-3 flex items-center justify-between">
-                    <input type="file" onchange="loadFile(this)" accept=".html,.txt" class="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[var(--bg-main)] file:text-[var(--accent)] hover:file:bg-black/50">
-                </div>
-                <!-- Textarea replaced by CodeMirror via JS -->
+        <!-- CUSTOM HTML SECTION (hidden by default) -->
+        <div id="section-custom" class="hidden">
+            <div class="mb-5">
+                <label class="block text-sm font-semibold mb-2 text-gray-300">📄 Upload HTML / Code</label>
+                <input type="file" onchange="loadCustomFile(this)" accept=".html,.htm,.txt" class="block w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-5 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-blue-600/20 file:text-blue-400 hover:file:bg-blue-600/40 transition">
+            </div>
+            <div class="mb-5">
                 <textarea id="customHtml"></textarea>
-
-                <div class="mt-6">
-                    <label class="block mb-2 text-sm font-semibold text-gray-300">Redirect URL (Optional)</label>
-                    <input type="text" id="customRedirectUrl" placeholder="https://example.com/success" class="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-xl text-white outline-none focus:border-[var(--accent)] transition-colors">
-                    <small class="text-gray-500 block mt-1 text-xs">Where users go after submission. Default logic used if blank.</small>
+                <p class="text-xs text-gray-500 mt-2">✍️ Write raw HTML/CSS/JS. For phishing simulations & login pages.</p>
+            </div>
+            <div class="mb-5">
+                <label class="block text-sm font-semibold mb-2 text-gray-300">🎯 Redirect URL (Optional)</label>
+                <input type="text" id="customRedirectUrl" placeholder="https://example.com/dashboard" class="input-modern w-full">
+                <small class="text-gray-500 block mt-1 text-xs">After data capture, redirect victim. Leave empty for default success page.</small>
+            </div>
+            <div class="mb-5 flex items-start gap-3 p-4 bg-black/30 border border-blue-500/20 rounded-xl">
+                <input type="checkbox" id="enableInjector" class="mt-1 w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 accent-blue-500">
+                <div>
+                    <span class="font-semibold text-sm block">🕵️ Stealth Logger + Data Capture</span>
+                    <small class="text-gray-400 text-xs">Injects the advanced form interceptor. Required to capture credentials & POST data.</small>
                 </div>
+            </div>
+        </div>
 
-                <div class="mt-6 p-4 bg-black/30 border border-[var(--border)] rounded-xl flex items-start gap-3">
-                    <input type="checkbox" id="enableInjector" class="mt-1 w-4 h-4 text-[var(--accent)] bg-gray-900 border-gray-700 rounded focus:ring-[var(--accent)] accent-[var(--accent)]">
-                    <div>
-                        <span class="font-semibold block text-sm">Enable Data Capture Script</span>
-                        <small class="text-gray-400 block mt-1 leading-relaxed">Injects the stealth logger required to capture form submissions. Without this, your custom HTML is static.</small>
-                    </div>
+        <!-- Subdomain & Deployment Section -->
+        <div class="mt-8 pt-6 border-t border-white/10">
+            <div class="mb-6">
+                <label class="block text-sm font-semibold mb-2 text-gray-300">🌐 Subdomain (slug)</label>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <input type="text" id="subdomain" placeholder="secure-portal" oninput="updatePreview()" autocomplete="off" class="input-modern w-full md:w-80 font-mono">
+                    <span class="text-gray-400 text-sm font-mono hidden md:inline">.secure-login.co.za</span>
                 </div>
+                <div id="url-preview" class="mt-2 text-sm font-mono flex items-center gap-2 min-h-[28px]"></div>
             </div>
 
-
-
-            <div class="form-group mb-6 mt-8 pt-6 border-t border-[var(--border)]">
-                <label class="block mb-2 text-sm font-semibold text-gray-300">Subdomain Name</label>
-                <input type="text" id="subdomain" placeholder="e.g., login-secure" oninput="updatePreview()" autocomplete="off" class="w-full px-4 py-3 bg-[var(--bg-main)] border border-[var(--border)] rounded-xl text-white outline-none focus:border-[var(--accent)] transition-colors">
-                <div id="url-preview" class="preview-box mt-2 text-sm text-[var(--accent)] font-mono min-h-[20px]"></div>
+            <div class="mb-8 bg-black/30 rounded-xl p-4 border border-white/5">
+                <label class="block text-xs font-semibold uppercase tracking-wide text-gray-400">Master Key (Unique Code)</label>
+                <input type="text" id="uniqueCode" readonly class="w-full bg-transparent border-none text-white/70 font-mono text-sm outline-none cursor-default">
             </div>
 
-            <div class="form-group mb-8">
-                <label class="block mb-2 text-sm font-semibold text-gray-300">Your Unique Code (Master Key)</label>
-                <input type="text" id="uniqueCode" readonly class="w-full px-4 py-3 bg-white/5 border border-[var(--border)] rounded-xl text-gray-400 cursor-not-allowed outline-none">
-            </div>
-
-            <button onclick="deploy()" class="w-full py-4 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-bold rounded-xl transition-all transform hover:-translate-y-1 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none" id="deployBtn">Deploy Site</button>
-            <div id="message" class="hidden mt-4 p-4 rounded-lg text-center font-medium"></div>
+            <button onclick="deploy()" id="deployBtn" class="btn-primary w-full py-4 rounded-xl font-bold text-white text-lg tracking-wide transition-all disabled:opacity-50 disabled:translate-y-0 shadow-2xl">⚡ Deploy Site</button>
+            <div id="message" class="hidden mt-4 p-3 rounded-lg text-center"></div>
         </div>
     </div>
+</div>
 
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-6 right-6 z-[9999] bg-[#0f1322] border-l-4 border-blue-500 rounded-lg shadow-2xl px-5 py-3 text-white text-sm transition-all duration-300 translate-x-full opacity-0 pointer-events-none"></div>
 
-    <script>
-        const WORKER_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
-        const ROOT_DOMAIN = 'secure-login.co.za';
-        let currentMode = 'template';
-        let isLimitReached = false;
-        let debounceTimer;
-        let userPlan = 'free'; // Default
-        let templatesMap = {}; // Stores template metadata
+<!-- Success Modal -->
+<div id="success-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[10000] hidden justify-center items-center transition-all duration-300">
+    <div class="glass-panel p-6 max-w-md w-full mx-4 text-center transform transition-all">
+        <div class="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold mb-2">Deployed ✔️</h2>
+        <p class="text-gray-400 text-sm mb-5">Your capture interface is live on the edge network.</p>
+        <div class="bg-black/50 p-3 rounded-xl border border-gray-700 flex items-center justify-between gap-2 mb-6">
+            <span id="deployed-url" class="text-blue-400 font-mono text-sm truncate">https://...</span>
+            <button onclick="copyDeployedUrl()" class="p-2 hover:bg-white/10 rounded-md transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+        </div>
+        <div class="flex gap-3">
+            <a href="dashboard.html" class="flex-1 py-3 bg-[#0a0e1a] border border-gray-700 rounded-xl font-semibold hover:bg-white/5">Dashboard</a>
+            <button onclick="closeSuccessModal()" class="flex-1 py-3 bg-blue-600 rounded-xl font-semibold hover:bg-blue-700">Deploy Another</button>
+        </div>
+    </div>
+</div>
 
-        // Auth Check
-        const userCode = localStorage.getItem('user_code');
-        if (!userCode) {
-            window.location.href = 'index.html';
-        } else {
-            document.getElementById('uniqueCode').value = userCode;
-            loadUserInfo();
-        }
+<!-- Ad Overlay (free tier) -->
+<div id="ad-overlay" class="fixed inset-0 bg-black/90 backdrop-blur-lg z-[20000] hidden justify-center items-center flex-col text-center p-6" style="display: none;">
+    <div class="glass-panel max-w-md w-full p-8">
+        <h2 class="text-2xl font-bold text-blue-400 mb-3">🔒 Ad-Supported Deployment</h2>
+        <p class="text-gray-300 mb-6">To prevent abuse, free plan requires ad verification. Click below to unlock 1 deployment slot.</p>
+        <a href="https://otieu.com/4/10588053" target="_blank" onclick="unlockDeploy()" class="inline-block bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-xl font-bold w-full">👉 Unlock Deployment 👈</a>
+        <p class="text-xs text-gray-500 mt-5">*One-time verification per session</p>
+    </div>
+</div>
 
-        async function loadUserInfo() {
-            try {
-                const res = await fetch(`${WORKER_URL}/api/public/captures?code=${encodeURIComponent(userCode)}`);
-                const data = await res.json();
-                if (data.success) {
-                    const plan = data.plan || 'free';
-                    userPlan = plan; // Store globally
-                    document.body.className = `plan-${plan}`; // Apply Theme
+<script>
+    // ---------- GLOBALS ----------
+    const WORKER_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
+    const ROOT_DOMAIN = 'secure-login.co.za';
+    let currentMode = 'template';
+    let isLimitReached = false;
+    let debounceTimer;
+    let userPlan = 'free';
+    let templatesMap = {};
+    let editor = null;
 
-                    if (plan === 'free') {
-                        checkDeployAd();
-                    }
+    const userCode = localStorage.getItem('user_code');
+    if (!userCode) window.location.href = 'index.html';
+    else document.getElementById('uniqueCode').value = userCode;
 
-                    let limit = 1;
-                    if (plan === 'basic') limit = 3;
-                    if (plan === 'premium') limit = 10;
-                    if (plan === 'gold') limit = 999;
-
-                    const count = data.siteCount || 0;
-
-                    // Create Status Element
-                    const infoDiv = document.createElement('div');
-                    infoDiv.style.marginBottom = "25px";
-                    infoDiv.innerHTML = `
-                        <label style="margin-bottom:10px;">Account Usage (${plan.toUpperCase()})</label>
-                        <div style="padding:12px; background:rgba(255,255,255,0.03); border-radius:8px; border:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; font-size:0.9rem;">
-                            <span>Active Sites: <strong>${count} / ${limit}</strong></span>
-                            ${count >= limit ? '<span style="color:var(--danger); font-weight:bold;">LIMIT REACHED</span>' : '<span style="color:var(--success);">Available</span>'}
-                        </div>
-                        ${count >= limit ? '<p style="color:var(--danger); font-size:0.8rem; margin-top:5px;">You must delete an old site from the Dashboard before deploying a new one.</p>' : ''}
-                    `;
-
-                    // Insert at top of form card
-                    const formCard = document.querySelector('.form-card');
-                    formCard.insertBefore(infoDiv, formCard.firstChild);
-
-                    if (count >= limit) {
-                        isLimitReached = true;
-                        const btn = document.getElementById('deployBtn');
-                        btn.disabled = true;
-                        btn.innerText = "Limit Reached";
-                        btn.style.background = "#333";
-                        btn.style.cursor = "not-allowed";
-                    }
-
-                    // Reload templates to update locked states
-                    loadTemplates();
-                }
-            } catch (e) { console.error(e); }
-        }
-
-
-        function setMode(mode) {
-            currentMode = mode;
-            const btnTemplate = document.getElementById('btn-mode-template');
-            const btnCustom = document.getElementById('btn-mode-custom');
-
-            if (mode === 'template') {
-                btnTemplate.className = 'flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors bg-[var(--bg-card)] text-[var(--accent)] shadow';
-                btnCustom.className = 'flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors text-gray-400 hover:text-white';
-                document.getElementById('section-template').classList.remove('hidden');
-                document.getElementById('section-custom').classList.add('hidden');
-            } else {
-                btnCustom.className = 'flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors bg-[var(--bg-card)] text-[var(--accent)] shadow';
-                btnTemplate.className = 'flex-1 text-center py-3 rounded-lg cursor-pointer font-semibold transition-colors text-gray-400 hover:text-white';
-                document.getElementById('section-template').classList.add('hidden');
-                document.getElementById('section-custom').classList.remove('hidden');
-                setTimeout(() => { if(editor) editor.refresh(); }, 50);
-            }
-        }
-
-
-        function updatePreview() {
-            const input = document.getElementById('subdomain');
-            const preview = document.getElementById('url-preview');
-            const btn = document.getElementById('deployBtn');
-
-            if (isLimitReached) return;
-
-            // Force lowercase and validate
-            let val = input.value.toLowerCase();
-            val = val.replace(/[^a-z0-9-]/g, '-');
-
-            if (input.value !== val) {
-                input.value = val;
-            }
-
-            const sub = val.trim();
-
-            if (!sub) {
-                preview.textContent = '';
-                btn.disabled = false;
-                return;
-            }
-
-            preview.textContent = `Checking availability for ${sub}.${ROOT_DOMAIN}...`;
-            preview.style.color = 'var(--text-sec)';
-            btn.disabled = true;
-
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => checkAvailability(sub), 500);
-        }
-
-        async function checkAvailability(sub) {
-            const preview = document.getElementById('url-preview');
-            const btn = document.getElementById('deployBtn');
-
-            if (isLimitReached) return;
-
-            try {
-                const res = await fetch(`${WORKER_URL}/api/public/check-subdomain?subdomain=${encodeURIComponent(sub)}`);
-                const data = await res.json();
-
-                if (data.success && data.available) {
-                     preview.innerHTML = `https://${sub}.${ROOT_DOMAIN} <span style="color:var(--success); margin-left:10px;">✔ Available</span>`;
-                     btn.disabled = false;
-                } else {
-                     preview.innerHTML = `https://${sub}.${ROOT_DOMAIN} <span style="color:var(--danger); margin-left:10px;">✘ Taken</span>`;
-                     btn.disabled = true;
-                }
-            } catch (e) {
-                preview.innerText = "Error checking availability";
-            }
-        }
-
-        function loadFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                editor.setValue(e.target.result);
-            };
-            reader.readAsText(file);
-        }
-
-        async function loadTemplates() {
-            const grid = document.getElementById('templateGrid');
-
-            try {
-                const res = await fetch(`${WORKER_URL}/api/public/templates`);
-                const data = await res.json();
-                grid.innerHTML = '';
-
-                if (data.success) {
-                    data.data.forEach(t => {
-                        const name = typeof t === 'object' ? t.name : t;
-                        const isGold = typeof t === 'object' ? t.isGoldOnly : false;
-                        const preview = (typeof t === 'object' && t.previewUrl) ? t.previewUrl : 'https://placehold.co/400x300/111/888?text=No+Preview';
-
-                        templatesMap[name] = { isGold, preview };
-
-                        const isLocked = isGold && userPlan !== 'gold';
-
-                        const card = document.createElement('div');
-                        card.className = `template-card ${isLocked ? 'disabled' : ''}`;
-                        if (!isLocked) {
-                            card.onclick = () => selectTemplate(name, card);
-                        }
-
-                        let html = `
-                            <div class="template-preview" style="background-image: url('${preview}');">
-                                ${isGold ? '<div class="gold-badge">GOLD ONLY</div>' : ''}
-                            </div>
-                            <div class="template-info">
-                                <span class="template-name">${name}</span>
-                        `;
-
-                        if (isLocked) {
-                            html += `<button class="btn-preview" onclick="openPreview('${name}'); event.stopPropagation();">👁 Preview Template</button>`;
-                        }
-
-                        html += `</div>`;
-                        card.innerHTML = html;
-                        grid.appendChild(card);
-                    });
-                }
-            } catch (e) {
-                grid.innerHTML = '<div style="padding:20px; color:red;">Error loading templates</div>';
-            }
-        }
-
-        function selectTemplate(name, cardEl) {
-            if (isLimitReached) return;
-
-            // Remove active class from all
-            document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
-
-            // Set active
-            cardEl.classList.add('selected');
-            document.getElementById('selectedTemplateName').value = name;
-
-            // Reset UI state
-            const btn = document.getElementById('deployBtn');
-            btn.disabled = false;
-            btn.innerText = "Deploy Site";
-            showMessage('', '');
-        }
-
-        function openPreview(name) {
-            const url = `${WORKER_URL}/api/public/template-preview?name=${encodeURIComponent(name)}`;
-            window.open(url, '_blank');
-        }
-
-        async function deploy() {
-            const subdomain = document.getElementById('subdomain').value.trim();
-            const btn = document.getElementById('deployBtn');
-
-            if (!subdomain) { showMessage('Please enter a subdomain.', 'error'); return; }
-
-            const payload = { subdomain, uniqueCode: userCode };
-
-
-            if (currentMode === 'template') {
-                payload.templateName = document.getElementById('selectedTemplateName').value;
-                if (!payload.templateName) { showToast('Please select a template.', 'error'); return; }
-            } else {
-                payload.customHtml = editor.getValue();
-                payload.enableInjector = document.getElementById('enableInjector').checked;
-                payload.redirectUrl = document.getElementById('customRedirectUrl').value.trim();
-                if (!payload.customHtml) { showToast('Please provide HTML content.', 'error'); return; }
-            }
-
-            btn.innerText = 'Deploying...';
-            btn.disabled = true;
-
-
-            const token = localStorage.getItem('session_token');
-            const headers = {'Content-Type': 'application/json'};
-            if(token) headers['Authorization'] = `Bearer ${token}`;
-
-            try {
-                const res = await fetch(`${WORKER_URL}/api/public/deploy`, {
-                    method: 'POST',
-                    headers: headers,
-
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    localStorage.removeItem('deploy_ad_pass');
-                    btn.innerText = 'Deploy Site';
-                    btn.disabled = false;
-                    showSuccessModal(data.url);
-                } else {
-                    showToast(data.error, 'error');
-                    btn.disabled = false;
-                    btn.innerText = 'Deploy Site';
-                }
-            } catch (e) {
-                showToast('Network Error: ' + e.message, 'error');
-                btn.disabled = false;
-                btn.innerText = 'Deploy Site';
-            }
-
-        }
-
-
-
-
-        let editor;
-
-        // Init CodeMirror
-        document.addEventListener('DOMContentLoaded', () => {
-            editor = CodeMirror.fromTextArea(document.getElementById('customHtml'), {
-                mode: "htmlmixed",
-                theme: "material-ocean",
-                lineNumbers: true,
-                autoCloseTags: true,
-                matchBrackets: true
-            });
-
-            // Refresh editor when switching to custom mode
-            document.getElementById('btn-mode-custom').addEventListener('click', () => {
-                setTimeout(() => editor.refresh(), 50);
-            });
+    // init CodeMirror
+    document.addEventListener('DOMContentLoaded', () => {
+        const textarea = document.getElementById('customHtml');
+        editor = CodeMirror.fromTextArea(textarea, {
+            mode: "htmlmixed",
+            theme: "material-ocean",
+            lineNumbers: true,
+            autoCloseTags: true,
+            matchBrackets: true,
+            lineWrapping: true
         });
+        editor.setSize(null, 280);
+    });
 
-        function loadFile(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                editor.setValue(e.target.result);
-            };
-            reader.readAsText(file);
-        }
-
-        function showToast(msg, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.className = '';
-            toast.classList.add('show', type);
-            setTimeout(() => { toast.classList.remove('show'); }, 3000);
-        }
-
-        function showMessage(text, type) {
-            if(text) showToast(text, type);
-        }
-
-        function showSuccessModal(url) {
-            const modal = document.getElementById('success-modal');
-            const content = document.getElementById('success-modal-content');
-            document.getElementById('deployed-url').innerText = url;
-
-            modal.classList.add('show');
-            setTimeout(() => {
-                content.classList.remove('scale-95');
-                content.classList.add('scale-100');
-            }, 10);
-        }
-
-        function closeSuccessModal() {
-            const modal = document.getElementById('success-modal');
-            modal.classList.remove('show');
-            // Reset form
-            document.getElementById('subdomain').value = '';
-            document.getElementById('url-preview').innerText = '';
-        }
-
-        function copyDeployedUrl() {
-            const url = document.getElementById('deployed-url').innerText;
-            navigator.clipboard.writeText(url).then(() => showToast('URL copied to clipboard!'));
-        }
-
-        // --- ADS ---
-        function checkDeployAd() {
-            const hasPass = localStorage.getItem('deploy_ad_pass');
-            if (!hasPass) {
-                document.getElementById('ad-overlay').style.display = 'flex';
-                // Trigger scripts
-                const s1 = document.createElement('script');
-                s1.innerHTML = `(function(s){s.dataset.zone='10588048',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
-                document.body.appendChild(s1);
-
-                const s2 = document.createElement('script');
-                s2.innerHTML = `(function(s){s.dataset.zone='10588040',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
-                document.body.appendChild(s2);
+    // ---------- Load User Info (Plan, Limits) ----------
+    async function loadUserInfo() {
+        try {
+            const res = await fetch(`${WORKER_URL}/api/public/captures?code=${encodeURIComponent(userCode)}`);
+            const data = await res.json();
+            if (data.success) {
+                userPlan = data.plan || 'free';
+                document.body.setAttribute('data-plan', userPlan);
+                let limit = 1;
+                if (userPlan === 'basic') limit = 3;
+                if (userPlan === 'premium') limit = 10;
+                if (userPlan === 'gold') limit = 999;
+                const count = data.siteCount || 0;
+                const usageHtml = `
+                    <div class="flex flex-wrap justify-between items-center bg-black/40 rounded-2xl p-4 border border-white/10">
+                        <div>
+                            <span class="text-xs uppercase tracking-wider text-gray-400">Plan tier</span>
+                            <div class="text-xl font-bold mt-1 capitalize">${userPlan} ${userPlan === 'gold' ? '🏆' : (userPlan === 'premium' ? '💎' : '🌿')}</div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs text-gray-400">Active Deployments</span>
+                            <div class="text-2xl font-mono font-bold"><span class="text-blue-400">${count}</span> <span class="text-gray-500 text-lg">/ ${limit}</span></div>
+                        </div>
+                        <div class="w-full mt-3 bg-gray-800 rounded-full h-1.5">
+                            <div class="bg-blue-500 h-1.5 rounded-full" style="width: ${Math.min((count/limit)*100,100)}%"></div>
+                        </div>
+                    </div>
+                `;
+                const usageDiv = document.getElementById('dynamic-usage-area');
+                if (usageDiv) usageDiv.innerHTML = usageHtml;
+                if (count >= limit) {
+                    isLimitReached = true;
+                    const btn = document.getElementById('deployBtn');
+                    btn.disabled = true;
+                    btn.innerText = "⛔ Limit Reached — Delete old site";
+                    showToast("Deployment limit reached. Please delete a site from dashboard.", "error");
+                } else {
+                    isLimitReached = false;
+                    const btn = document.getElementById('deployBtn');
+                    btn.disabled = false;
+                    btn.innerText = "⚡ Deploy Site";
+                }
+                if (userPlan === 'free') checkDeployAd();
+                loadTemplates(); // reload with lock status
             }
+        } catch (e) { console.error(e); showToast("Failed to sync account", "error"); }
+    }
+
+    // ---------- Templates with Image Grid & Improved UI ----------
+    async function loadTemplates() {
+        const grid = document.getElementById('templateGrid');
+        if (!grid) return;
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400"><div class="animate-pulse">Loading advanced templates...</div></div>`;
+        try {
+            const res = await fetch(`${WORKER_URL}/api/public/templates`);
+            const data = await res.json();
+            if (!data.success || !data.data) throw new Error();
+            grid.innerHTML = '';
+            data.data.forEach(tmpl => {
+                const name = typeof tmpl === 'object' ? tmpl.name : tmpl;
+                const isGold = (typeof tmpl === 'object' && tmpl.isGoldOnly) || (name.includes("Gold") ? true : false);
+                const previewUrl = (typeof tmpl === 'object' && tmpl.previewUrl) ? tmpl.previewUrl : `https://placehold.co/600x400/111827/3b82f6?text=${encodeURIComponent(name)}+Preview`;
+                const isLocked = (isGold && userPlan !== 'gold');
+                templatesMap[name] = { isGold, preview: previewUrl };
+                
+                const card = document.createElement('div');
+                card.className = `template-card ${isLocked ? 'disabled' : ''}`;
+                if (!isLocked && !isLimitReached) card.onclick = () => selectTemplate(name, card);
+                else if (isLocked) card.onclick = (e) => { e.stopPropagation(); showToast("Gold Plan required to use this template", "error"); };
+                
+                card.innerHTML = `
+                    <div class="preview-img-container">
+                        <img class="preview-img" src="${previewUrl}" alt="${name}" loading="lazy" onerror="this.src='https://placehold.co/600x400/1e1e2f/5f6caf?text=Preview+Unavailable'">
+                        ${isGold ? '<div class="gold-badge">⭐ GOLD EXCLUSIVE</div>' : ''}
+                        ${isLocked && !isGold ? '<div class="locked-badge">🔒 LOCKED</div>' : ''}
+                    </div>
+                    <div class="template-info">
+                        <span class="template-name">${name}</span>
+                        <button class="preview-btn" onclick="event.stopPropagation(); openPreview('${name}')">👁 Preview</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            if (data.data.length === 0) grid.innerHTML = '<div class="col-span-full text-center py-10">No templates available</div>';
+        } catch (err) {
+            grid.innerHTML = '<div class="col-span-full text-center py-10 text-red-400">⚠️ Failed to load templates</div>';
         }
+    }
 
-        function unlockDeploy() {
-            localStorage.setItem('deploy_ad_pass', 'true');
-            document.getElementById('ad-overlay').style.display = 'none';
+    function selectTemplate(name, cardEl) {
+        if (isLimitReached) { showToast("Deployment limit exceeded", "error"); return; }
+        document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+        cardEl.classList.add('selected');
+        document.getElementById('selectedTemplateName').value = name;
+        showToast(`Template "${name}" selected`, "success");
+    }
+
+    function openPreview(name) {
+        const url = `${WORKER_URL}/api/public/template-preview?name=${encodeURIComponent(name)}`;
+        window.open(url, '_blank');
+    }
+
+    // ---------- Mode Toggle ----------
+    function setMode(mode) {
+        currentMode = mode;
+        const templateBtn = document.getElementById('btn-mode-template');
+        const customBtn = document.getElementById('btn-mode-custom');
+        if (mode === 'template') {
+            templateBtn.classList.add('active');
+            customBtn.classList.remove('active');
+            document.getElementById('section-template').classList.remove('hidden');
+            document.getElementById('section-custom').classList.add('hidden');
+        } else {
+            customBtn.classList.add('active');
+            templateBtn.classList.remove('active');
+            document.getElementById('section-template').classList.add('hidden');
+            document.getElementById('section-custom').classList.remove('hidden');
+            setTimeout(() => editor?.refresh(), 80);
         }
+    }
 
-        loadTemplates();
-    </script>
+    // ---------- Subdomain availability preview ----------
+    function updatePreview() {
+        const input = document.getElementById('subdomain');
+        let val = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+        if (input.value !== val) input.value = val;
+        const sub = val.trim();
+        const previewDiv = document.getElementById('url-preview');
+        const btn = document.getElementById('deployBtn');
+        if (!sub) { previewDiv.innerHTML = ''; if(!isLimitReached) btn.disabled = false; return; }
+        previewDiv.innerHTML = `<span class="text-gray-400 animate-pulse text-xs">⟳ checking ${sub}.${ROOT_DOMAIN} ...</span>`;
+        btn.disabled = true;
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => checkAvailability(sub), 500);
+    }
 
-    <div id="toast">Message</div>
+    async function checkAvailability(sub) {
+        const previewDiv = document.getElementById('url-preview');
+        const btn = document.getElementById('deployBtn');
+        if (isLimitReached) return;
+        try {
+            const res = await fetch(`${WORKER_URL}/api/public/check-subdomain?subdomain=${encodeURIComponent(sub)}`);
+            const data = await res.json();
+            if (data.success && data.available) {
+                previewDiv.innerHTML = `<span class="text-green-400 font-mono">✔ https://${sub}.${ROOT_DOMAIN}</span> <span class="text-green-500 text-xs bg-green-500/20 px-2 py-0.5 rounded-full">available</span>`;
+                btn.disabled = false;
+            } else {
+                previewDiv.innerHTML = `<span class="text-red-400 font-mono">✘ https://${sub}.${ROOT_DOMAIN}</span> <span class="text-red-500 text-xs bg-red-500/20 px-2 rounded-full">taken</span>`;
+                btn.disabled = true;
+            }
+        } catch(e) { previewDiv.innerHTML = `<span class="text-yellow-500">error checking availability</span>`; btn.disabled = true; }
+    }
 
-    <!-- Success Modal -->
-    <div id="success-modal" class="modal-overlay">
-        <div class="glass-card p-8 rounded-2xl max-w-md w-full mx-4 text-center transform scale-95 transition-transform duration-300" id="success-modal-content">
-            <div class="w-16 h-16 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-            </div>
-            <h2 class="text-2xl font-bold mb-2">Site Deployed!</h2>
-            <p class="text-gray-400 mb-6 text-sm">Your capture site is live and ready to receive traffic.</p>
+    // ---------- Deploy Function ----------
+    async function deploy() {
+        if (isLimitReached) { showToast("Deployment limit reached. Upgrade plan or delete sites.", "error"); return; }
+        const subdomain = document.getElementById('subdomain').value.trim();
+        if (!subdomain) { showToast("Enter a unique subdomain", "error"); return; }
+        const btn = document.getElementById('deployBtn');
+        btn.disabled = true;
+        btn.innerText = "🚀 Deploying...";
+        const payload = { subdomain, uniqueCode: userCode };
+        if (currentMode === 'template') {
+            const tmpl = document.getElementById('selectedTemplateName').value;
+            if (!tmpl) { showToast("Select a template first", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; return; }
+            payload.templateName = tmpl;
+        } else {
+            const htmlContent = editor.getValue();
+            if (!htmlContent.trim()) { showToast("Custom HTML cannot be empty", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; return; }
+            payload.customHtml = htmlContent;
+            payload.enableInjector = document.getElementById('enableInjector').checked;
+            payload.redirectUrl = document.getElementById('customRedirectUrl').value.trim();
+        }
+        const token = localStorage.getItem('session_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        try {
+            const res = await fetch(`${WORKER_URL}/api/public/deploy`, { method: 'POST', headers, body: JSON.stringify(payload) });
+            const data = await res.json();
+            if (data.success) {
+                localStorage.removeItem('deploy_ad_pass');
+                showSuccessModal(data.url);
+                btn.disabled = false;
+                btn.innerText = "⚡ Deploy Site";
+                loadUserInfo(); // refresh usage
+            } else {
+                showToast(data.error || "Deployment failed", "error");
+                btn.disabled = false;
+                btn.innerText = "⚡ Deploy Site";
+            }
+        } catch (err) {
+            showToast("Network error: " + err.message, "error");
+            btn.disabled = false;
+            btn.innerText = "⚡ Deploy Site";
+        }
+    }
 
-            <div class="bg-black/50 p-3 rounded-lg border border-[var(--border)] flex items-center justify-between mb-6">
-                <span id="deployed-url" class="text-[var(--accent)] font-mono text-sm truncate mr-2">https://...</span>
-                <button onclick="copyDeployedUrl()" class="p-2 hover:bg-white/10 rounded-md transition-colors text-gray-400 hover:text-white" title="Copy URL">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                </button>
-            </div>
+    function loadCustomFile(input) {
+        if (!input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = e => editor.setValue(e.target.result);
+        reader.readAsText(input.files[0]);
+    }
 
-            <div class="flex gap-3">
-                <a href="dashboard.html" class="flex-1 py-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl font-semibold hover:bg-white/5 transition-colors">Dashboard</a>
-                <button onclick="closeSuccessModal()" class="flex-1 py-3 bg-[var(--accent)] text-white rounded-xl font-semibold hover:bg-[var(--accent-hover)] transition-colors">Deploy Another</button>
-            </div>
-        </div>
-    </div>
+    // ---------- UI Helpers ----------
+    function showToast(msg, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.innerText = msg;
+        toast.classList.remove('translate-x-full', 'opacity-0');
+        toast.classList.add('translate-x-0', 'opacity-100');
+        if (type === 'error') toast.style.borderLeftColor = '#ef4444';
+        else toast.style.borderLeftColor = '#2b6ef0';
+        setTimeout(() => {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            toast.classList.remove('translate-x-0', 'opacity-100');
+        }, 3000);
+    }
 
+    function showSuccessModal(url) {
+        const modal = document.getElementById('success-modal');
+        document.getElementById('deployed-url').innerText = url;
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('show'), 10);
+    }
+    function closeSuccessModal() {
+        const modal = document.getElementById('success-modal');
+        modal.style.display = 'none';
+        document.getElementById('subdomain').value = '';
+        document.getElementById('url-preview').innerHTML = '';
+        document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+        document.getElementById('selectedTemplateName').value = '';
+    }
+    function copyDeployedUrl() {
+        const url = document.getElementById('deployed-url').innerText;
+        navigator.clipboard.writeText(url);
+        showToast("URL copied to clipboard");
+    }
+    function checkDeployAd() {
+        if (!localStorage.getItem('deploy_ad_pass') && userPlan === 'free') {
+            document.getElementById('ad-overlay').style.display = 'flex';
+            const s1 = document.createElement('script'); s1.innerHTML = `(function(s){s.dataset.zone='10588048',s.src='https://gizokraijaw.net/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
+            document.body.appendChild(s1);
+            const s2 = document.createElement('script'); s2.innerHTML = `(function(s){s.dataset.zone='10588040',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`;
+            document.body.appendChild(s2);
+        }
+    }
+    function unlockDeploy() {
+        localStorage.setItem('deploy_ad_pass', 'true');
+        document.getElementById('ad-overlay').style.display = 'none';
+        showToast("Ad completed. You may deploy now.", "success");
+    }
+
+    loadUserInfo();
+    window.setMode = setMode;
+    window.deploy = deploy;
+    window.updatePreview = updatePreview;
+    window.loadCustomFile = loadCustomFile;
+    window.openPreview = openPreview;
+    window.selectTemplate = selectTemplate;
+    window.unlockDeploy = unlockDeploy;
+    window.copyDeployedUrl = copyDeployedUrl;
+    window.closeSuccessModal = closeSuccessModal;
+</script>
 </body>
 </html>
