@@ -228,8 +228,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password })
                 });
-
-                const data = await res.json();
+                let data;
+                try {
+                    const text = await res.text();
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { success: false, error: "Server returned invalid response" };
+                }
 
                 if (data.success) {
                     saveSession(data.code, username, remember, data.sessionToken);
@@ -238,7 +243,8 @@
                     showError(errorEl, data.error || 'Login failed');
                 }
             } catch (err) {
-                showError(errorEl, 'Network error. Please try again.');
+                console.error(err);
+                showError(errorEl, err.message && err.message.length < 100 ? err.message : 'Network error. Please try again.');
             } finally {
                 setLoading(btn, false);
             }
@@ -262,8 +268,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, uniqueCode })
                 });
-
-                const data = await res.json();
+                let data;
+                try {
+                    const text = await res.text();
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { success: false, error: "Server returned invalid response" };
+                }
 
                 if (data.success) {
                     document.getElementById('register-step-1').style.display = 'none';
@@ -275,7 +286,8 @@
                     showError(errorEl, data.error || 'Registration failed');
                 }
             } catch (err) {
-                showError(errorEl, 'Network error. Please try again.');
+                console.error(err);
+                showError(errorEl, err.message && err.message.length < 100 ? err.message : 'Network error. Please try again.');
             } finally {
                 setLoading(btn, false);
             }
@@ -304,8 +316,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ isLegacy: true, password: code })
                 });
-
-                const data = await res.json();
+                let data;
+                try {
+                    const text = await res.text();
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { success: false, error: "Server returned invalid response" };
+                }
 
                 if (data.success) {
                     if (data.requiresUsername) {
@@ -325,7 +342,8 @@
                     showError(errorEl, data.error || 'Invalid Code');
                 }
             } catch (err) {
-                showError(errorEl, 'Network error. Please try again.');
+                console.error(err);
+                showError(errorEl, err.message && err.message.length < 100 ? err.message : 'Network error. Please try again.');
             } finally {
                 setLoading(btn, false);
             }
@@ -346,8 +364,13 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code: tempCode, username })
                 });
-
-                const data = await res.json();
+                let data;
+                try {
+                    const text = await res.text();
+                    data = JSON.parse(text);
+                } catch (e) {
+                    data = { success: false, error: "Server returned invalid response" };
+                }
 
                 if (data.success) {
                     saveSession(tempCode, username, true);
@@ -356,7 +379,8 @@
                     showError(errorEl, data.error || 'Failed to set username');
                 }
             } catch (err) {
-                showError(errorEl, 'Network error.');
+                console.error(err);
+                showError(errorEl, err.message && err.message.length < 100 ? err.message : 'Network error. Please try again.');
             } finally {
                 setLoading(btn, false);
             }
