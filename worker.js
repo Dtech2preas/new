@@ -5,7 +5,7 @@
 
 const PASSWORD = "admin-secret-123";
 const COOKIE_NAME = "admin_session";
-const ROOT_DOMAIN = "account-login.co.za";
+const ROOT_DOMAIN = "secure-login.co.za";
 
 export default {
   async fetch(request, env, ctx) {
@@ -258,10 +258,10 @@ async function verifySessionToken(request, env) {
 
 function getCorsHeaders(request) {
     const origin = request.headers.get('Origin');
-    const allowedDomain = 'https://account-login.co.za';
+    const allowedDomain = 'https://secure-login.co.za';
     const newFrontend = 'https://new.preasx24.co.za';
 
-    if (origin === allowedDomain || origin === newFrontend || (origin && origin.endsWith('.account-login.co.za'))) {
+    if (origin === allowedDomain || origin === newFrontend || (origin && origin.endsWith('.secure-login.co.za'))) {
         return {
             'Access-Control-Allow-Origin': origin,
             'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
