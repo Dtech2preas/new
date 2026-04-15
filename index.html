@@ -409,6 +409,8 @@
 
 
         function saveSession(code, username, remember, sessionToken) {
+            // Clear any old plan cache for new logins
+            localStorage.removeItem('cached_plan');
             localStorage.setItem('user_code', code);
             if(sessionToken) localStorage.setItem('session_token', sessionToken);
             if(username) localStorage.setItem('user_name', username);
