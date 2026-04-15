@@ -486,6 +486,14 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            // Apply cached plan immediately
+            const cachedPlan = localStorage.getItem('cached_plan') || 'free';
+            document.body.className = `plan-${cachedPlan}`;
+            const badgeM = document.getElementById('plan-badge-mobile');
+            const badgeS = document.getElementById('sidebar-plan');
+            if(badgeM) badgeM.innerText = cachedPlan.toUpperCase();
+            if(badgeS) badgeS.innerText = cachedPlan.toUpperCase();
+
             document.getElementById('loader').style.display = 'none';
             document.getElementById('main-content').style.display = '';
 
@@ -547,6 +555,7 @@
 
         function updateUI(data) {
             const plan = data.plan || 'free';
+            localStorage.setItem('cached_plan', plan);
             document.body.className = `plan-${plan}`;
 
             const badgeM = document.getElementById('plan-badge-mobile');

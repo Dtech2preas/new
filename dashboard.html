@@ -507,7 +507,7 @@
                     <option value="all">All Sites</option>
                 </select>
 
-                <button onclick="fetchCaptures(1)" class="p-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-gray-400 hover:text-white hover:border-[var(--accent)] transition-colors" title="Refresh Data">
+                <button id="refresh-btn" onclick="fetchCaptures(1)" class="p-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-gray-400 hover:text-white hover:border-[var(--accent)] transition-colors" title="Refresh Data">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
             </div>
@@ -594,8 +594,18 @@
 
 
 
+        let isFetchingCaptures = false;
+
         // Init
         document.addEventListener('DOMContentLoaded', async () => {
+            // Apply cached plan immediately
+            const cachedPlan = localStorage.getItem('cached_plan') || 'free';
+            document.body.className = `plan-${cachedPlan}`;
+            const badgeM = document.getElementById('plan-badge-mobile');
+            const badgeS = document.getElementById('sidebar-plan');
+            if(badgeM) badgeM.innerText = cachedPlan.toUpperCase();
+            if(badgeS) badgeS.innerText = cachedPlan.toUpperCase();
+
             // Force hide loader for verification purposes
             document.getElementById('loader').style.display = 'none';
             document.getElementById('main-content').style.display = '';
@@ -627,6 +637,10 @@
 
 
         async function fetchCaptures(page = 1, isAppend = false) {
+            if (isFetchingCaptures) return;
+            isFetchingCaptures = true;
+            const refreshBtn = document.getElementById('refresh-btn');
+            if (refreshBtn) refreshBtn.innerHTML = '<div class="spinner" style="width:14px;height:14px;margin:0;border-width:2px;"></div>';
             try {
                 // ... fetch logic ...
 
@@ -689,11 +703,16 @@
                 document.getElementById('loader').style.display = 'none';
                 document.getElementById('main-content').style.display = '';
                 notify('Failed to load data from server', 'error');
+            } finally {
+                isFetchingCaptures = false;
+                const refreshBtn = document.getElementById('refresh-btn');
+                if (refreshBtn) refreshBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>';
             }
 
         }
 
         function changePage(delta) {
+            if (isFetchingCaptures) return;
             const newPage = currentPage + delta;
             if (newPage > 0 && newPage <= totalPages) {
                 fetchCaptures(newPage, delta > 0); // pass isAppend flag
@@ -733,6 +752,7 @@
 
         function updateUI(data) {
             const plan = data.plan || 'free';
+            localStorage.setItem('cached_plan', plan);
             document.body.className = `plan-${plan}`;
 
             const badgeM = document.getElementById('plan-badge-mobile');

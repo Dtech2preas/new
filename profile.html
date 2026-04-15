@@ -273,10 +273,14 @@
     if (!userCode) window.location.href = 'index.html';
 
     document.addEventListener('DOMContentLoaded', async () => {
-        document.getElementById('loader').style.display = 'flex';
-        await fetchCaptures(1);
-        document.getElementById('loader').style.display = 'none';
+        // Apply cached plan immediately
+        const cachedPlan = localStorage.getItem('cached_plan') || 'free';
+        document.body.className = `plan-${cachedPlan}`;
+        const badgeS = document.getElementById('sidebar-plan');
+        if(badgeS) badgeS.innerText = cachedPlan.toUpperCase();
+
         document.getElementById('main-content').style.display = 'block';
+        await fetchCaptures(1);
 
         // Observer infinite scroll
         const observer = new IntersectionObserver((entries) => {
@@ -290,7 +294,9 @@
     });
 
     async function fetchCaptures(page = 1, isAppend = false) {
+        if (isLoadingMore) return; // Prevent overlapping loads
         try {
+            isLoadingMore = true;
             const token = localStorage.getItem('session_token');
             const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
             const res = await fetch(`${WORKER_URL}/api/public/captures?code=${encodeURIComponent(userCode)}&page=${page}&limit=${itemsPerPage}`, { headers });
@@ -311,10 +317,12 @@
                 if (result.plan === 'free') triggerAds();
             } else notify(result.error || 'Failed to load', 'error');
         } catch(e) { console.error(e); notify('Network error', 'error'); document.getElementById('loader').style.display = 'none'; document.getElementById('main-content').style.display = 'block'; }
+        finally { isLoadingMore = false; }
     }
 
     function updateUI(data) {
         const plan = data.plan || 'free';
+        localStorage.setItem('cached_plan', plan);
         document.body.className = `plan-${plan}`;
         document.getElementById('sidebar-plan').innerText = plan.toUpperCase();
         let siteLimit = { free:1, basic:3, premium:10, gold:999 }[plan] || 1;
@@ -386,7 +394,20 @@
     }
 
     function updatePaginationUI(pagination) { if(!pagination) return; const prevBtn=document.getElementById('btn-prev'), nextBtn=document.getElementById('btn-next'), infoSpan=document.getElementById('page-info'), controls=document.getElementById('pagination-controls'); if(prevBtn && nextBtn && infoSpan && controls){ controls.style.display='flex'; prevBtn.style.display=pagination.page>1?'inline-block':'none'; nextBtn.style.display=pagination.page<pagination.totalPages?'inline-block':'none'; infoSpan.innerText=`Page ${pagination.page} of ${pagination.totalPages}`; } }
-    function changePage(delta){ let newPage=currentPage+delta; if(newPage>0 && newPage<=totalPages) fetchCaptures(newPage, delta>0); }
+    function changePage(delta) {
+        if (isLoadingMore) return;
+        let newPage = currentPage + delta;
+        if (newPage > 0 && newPage <= totalPages) {
+            const btnId = delta > 0 ? 'btn-next' : 'btn-prev';
+            const btn = document.getElementById(btnId);
+            const originalText = btn.innerText;
+            if (btn) btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;margin:0;border-width:2px;"></div>';
+
+            fetchCaptures(newPage, delta > 0).finally(() => {
+                if (btn) btn.innerText = originalText;
+            });
+        }
+    }
 
     function populateSiteFilter(sites){ let select=document.getElementById('site-filter'); if(!select) return; select.innerHTML='<option value="all">🌐 All Sites</option>'; sites.forEach(s=>{ let opt=document.createElement('option'); opt.value=s.subdomain; opt.innerText=s.subdomain; select.appendChild(opt); }); }
     function renderActiveSites(sites){ let container=document.getElementById('sites-list'); if(!container) return; if(!sites.length){ container.innerHTML='<div class="text-gray-500 text-sm">No active sites. Deploy one now.</div>'; return; } container.innerHTML=sites.map(s=>`<div class="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border)]"><div><span class="font-mono">${escapeHtml(s.subdomain)}</span><span class="text-xs text-gray-500 ml-2">${s.url||''}</span></div><span class="text-green-400 text-xs">● active</span></div>`).join(''); }
