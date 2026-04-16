@@ -62,7 +62,7 @@ export default {
         }
 
         if (url.pathname === '/api/captures' && request.method === 'GET') {
-            return respond(await handleGetCaptures(env));
+            return respond(await handleGetCaptures(request, env));
         }
 
         if (url.pathname === '/api/admin/templates') {
@@ -375,16 +375,32 @@ async function handleCaptureRequest(request, env) {
 }
 
 
-async function handleGetCaptures(env) {
+async function handleGetCaptures(request, env) {
   try {
-    const list = await env.SUBDOMAINS.list({ prefix: "capture::" });
-    const keys = list.keys.slice(-20).reverse();
+    const url = new URL(request.url);
+    const cursor = url.searchParams.get('cursor');
+    const limit = parseInt(url.searchParams.get('limit')) || 20;
+
+    const options = { prefix: "capture::", limit: limit };
+    if (cursor && cursor !== 'null' && cursor !== 'undefined' && cursor !== '') {
+        options.cursor = cursor;
+    }
+
+    const list = await env.SUBDOMAINS.list(options);
+    const keys = list.keys; // Cloudflare KV list doesn't need slice if limit is applied, but keys might not be reverse chron.
+    // They are in lexicographical order.
     const promises = keys.map(async (k) => {
         const val = await env.SUBDOMAINS.get(k.name, { type: "json" });
         return { key: k.name, ...val };
     });
     const results = await Promise.all(promises);
-    return new Response(JSON.stringify({ success: true, data: results }), { headers: { 'Content-Type': 'application/json' } });
+
+    return new Response(JSON.stringify({
+        success: true,
+        data: results,
+        cursor: list.cursor,
+        list_complete: list.list_complete
+    }), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
      return jsonError(err.message, 500);
   }

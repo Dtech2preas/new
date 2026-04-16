@@ -389,6 +389,13 @@
                             <td>${u.code}</td>
                             <td>${u.plan.toUpperCase()}</td>
                             <td><span class="badge badge-${u.status}">${u.status.toUpperCase()}</span></td>
+                            <td>
+                                <button class="btn-success" style="padding: 4px 8px; font-size: 12px;" onclick="actionUser('${u.code}', 'activate')">Act</button>
+                                <button class="btn-warning" style="padding: 4px 8px; font-size: 12px; background: #f5a524; color: white; border: none; border-radius: 4px; cursor: pointer;" onclick="actionUser('${u.code}', 'suspend')">Susp</button>
+                                <button class="btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="actionUser('${u.code}', 'ban')">Ban</button>
+                                <button class="btn-danger" style="padding: 4px 8px; font-size: 12px; background: #990000;" onclick="actionUser('${u.code}', 'delete')">Del</button>
+                                <button style="padding: 4px 8px; font-size: 12px;" onclick="updateUserPlan('${u.code}')">Plan</button>
+                            </td>
                             <td>${u.strikes || 0}</td>
                             <td>${expiry}</td>
                         `;
