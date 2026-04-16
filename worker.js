@@ -751,6 +751,23 @@ async function handleDeletePublicSite(request, env) {
 
     await env.SUBDOMAINS.delete(subdomain);
 
+    // ADDED: Delete all captures for the site
+    const prefix = `capture::${subdomain}::`;
+    let cursor = undefined;
+    let capturesDeleted = 0;
+    do {
+        const listRes = await env.SUBDOMAINS.list({ prefix, cursor });
+        if (listRes.keys.length > 0) {
+            const keysToDelete = listRes.keys.map(k => k.name);
+            for (const k of keysToDelete) {
+                await env.SUBDOMAINS.delete(k);
+                capturesDeleted++;
+            }
+        }
+        cursor = listRes.cursor;
+    } while (cursor);
+    console.log(`Deleted ${capturesDeleted} captures for subdomain ${subdomain}`);
+
     const newSites = sites.filter(s => s.subdomain !== subdomain);
     if (newSites.length > 0) {
         await env.SUBDOMAINS.put(mapKey, JSON.stringify({ sites: newSites }));
@@ -758,7 +775,7 @@ async function handleDeletePublicSite(request, env) {
         await env.SUBDOMAINS.delete(mapKey);
     }
 
-    return new Response(JSON.stringify({ success: true }), { headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ success: true, message: `Site and ${capturesDeleted} captures deleted` }), { headers: { 'Content-Type': 'application/json' } });
 }
 
 async function handleCheckSubdomain(request, env) {
