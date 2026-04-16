@@ -55,12 +55,11 @@
 
         <div id="loading">Loading data...</div>
 
-        <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
-            <input type="text" id="capture-search" placeholder="Search captures..." style="padding: 10px; width: 100%; max-width: 400px; border-radius: 6px; border: 1px solid #ddd;">
+        <div style="margin-bottom: 15px; display: flex; justify-content: flex-end; align-items: center;">
             <div>
-                <button id="prev-page" style="padding: 8px 12px; background: #eee; border: 1px solid #ddd; cursor: pointer; border-radius: 4px;">&laquo; Prev</button>
+                <button id="prev-page" style="padding: 8px 12px; background: #eee; border: 1px solid #ddd; cursor: pointer; border-radius: 4px;" disabled>&laquo; Prev</button>
                 <span id="page-info" style="margin: 0 10px; font-weight: bold;">Page 1</span>
-                <button id="next-page" style="padding: 8px 12px; background: #eee; border: 1px solid #ddd; cursor: pointer; border-radius: 4px;">Next &raquo;</button>
+                <button id="next-page" style="padding: 8px 12px; background: #eee; border: 1px solid #ddd; cursor: pointer; border-radius: 4px;" disabled>Next &raquo;</button>
             </div>
         </div>
 
@@ -80,64 +79,44 @@
         const WORKER_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
 
 
-        let allCaptures = [];
-        let filteredCaptures = [];
         let currentPage = 1;
-        const itemsPerPage = 20;
-
-        function renderTable() {
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = '';
-
-            const start = (currentPage - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            const pageData = filteredCaptures.slice(start, end);
-
-            if (filteredCaptures.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="empty">No captured data found.</td></tr>`;
-                document.getElementById('page-info').innerText = 'Page 1 of 1';
-                return;
-            }
-
-            const totalPages = Math.ceil(filteredCaptures.length / itemsPerPage) || 1;
-            document.getElementById('page-info').innerText = `Page ${currentPage} of ${totalPages}`;
-
-            pageData.forEach(cap => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><code>${cap.siteKey}</code></td>
-                    <td><code>${cap.captureId || 'N/A'}</code></td>
-                    <td><div class="timestamp">${new Date(cap.timestamp).toLocaleString()}</div></td>
-                    <td>${cap.ip}</td>
-                    <td><pre>${JSON.stringify(cap.payload, null, 2)}</pre></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        document.getElementById('capture-search').addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            filteredCaptures = allCaptures.filter(cap => {
-                const searchStr = JSON.stringify(cap).toLowerCase();
-                return searchStr.includes(term);
-            });
-            currentPage = 1;
-            renderTable();
-        });
+        let cursorHistory = [undefined]; // Stores cursors for previous pages
+        let currentCursor = undefined;
+        let nextCursor = undefined;
+        let isFetchingCaptures = false;
 
         document.getElementById('prev-page').addEventListener('click', () => {
-            if (currentPage > 1) { currentPage--; renderTable(); }
+            if (currentPage > 1 && !isFetchingCaptures) {
+                currentPage--;
+                currentCursor = cursorHistory[currentPage - 1];
+                loadData(currentCursor);
+            }
         });
 
         document.getElementById('next-page').addEventListener('click', () => {
-            const totalPages = Math.ceil(filteredCaptures.length / itemsPerPage);
-            if (currentPage < totalPages) { currentPage++; renderTable(); }
+            if (nextCursor && !isFetchingCaptures) {
+                currentPage++;
+                if(cursorHistory.length <= currentPage - 1) {
+                    cursorHistory.push(nextCursor);
+                }
+                currentCursor = nextCursor;
+                loadData(currentCursor);
+            }
         });
 
 
-        async function loadData() {
+        async function loadData(cursor = undefined) {
+            if(isFetchingCaptures) return;
+            isFetchingCaptures = true;
+            document.getElementById('loading').style.display = 'block';
+
             try {
-                const response = await fetch(`${WORKER_URL}/api/captures`, { credentials: 'include' });
+                let url = `${WORKER_URL}/api/captures?limit=20`;
+                if(cursor) {
+                    url += `&cursor=${cursor}`;
+                }
+
+                const response = await fetch(url, { credentials: 'include' });
 
                 if (response.status === 401) {
                     window.location.href = 'admin-login.html';
@@ -147,12 +126,20 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    nextCursor = result.cursor;
+
+                    document.getElementById('page-info').innerText = `Page ${currentPage}`;
+                    document.getElementById('prev-page').disabled = currentPage === 1;
+                    document.getElementById('next-page').disabled = !nextCursor;
+
                     renderTable(result.data);
                 } else {
                     document.getElementById('loading').innerText = 'Error loading data: ' + result.error;
                 }
             } catch (err) {
                 document.getElementById('loading').innerText = 'Network Error: ' + err.message;
+            } finally {
+                isFetchingCaptures = false;
             }
         }
 

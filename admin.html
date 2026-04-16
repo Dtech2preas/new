@@ -314,6 +314,7 @@
                 const res = await fetch(WORKER_URL + '/api/admin/users/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_session') },
+
                     body: JSON.stringify({ action, uniqueCode })
                 });
                 const data = await res.json();
@@ -334,6 +335,7 @@
                 const res = await fetch(WORKER_URL + '/api/admin/users/action', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_session') },
+
                     body: JSON.stringify({ action: 'update_plan', uniqueCode, plan: plan.toLowerCase(), expiryDays: days ? parseInt(days) : null })
                 });
                 const data = await res.json();
@@ -389,6 +391,13 @@
                             <td>${u.code}</td>
                             <td>${u.plan.toUpperCase()}</td>
                             <td><span class="badge badge-${u.status}">${u.status.toUpperCase()}</span></td>
+                            <td>
+                                <button class="btn-success" onclick="actionUser('${u.code}', 'activate')" style="padding: 4px 8px; font-size: 12px;">Activate</button>
+                                <button class="btn-pending" onclick="actionUser('${u.code}', 'suspend')" style="padding: 4px 8px; font-size: 12px; background: #f5a524; color: white; border: none; border-radius: 4px; cursor: pointer;">Suspend</button>
+                                <button class="btn-danger" onclick="actionUser('${u.code}', 'ban')" style="padding: 4px 8px; font-size: 12px; background: #333;">Ban</button>
+                                <button class="btn-danger" onclick="actionUser('${u.code}', 'delete')" style="padding: 4px 8px; font-size: 12px;">Delete</button>
+                                <button class="btn-primary" onclick="updateUserPlan('${u.code}')" style="padding: 4px 8px; font-size: 12px; background: #0070f3; color: white; border: none; border-radius: 4px; cursor: pointer;">Update Plan</button>
+                            </td>
                             <td>${u.strikes || 0}</td>
                             <td>${expiry}</td>
                         `;
@@ -545,7 +554,7 @@
             try {
                 const response = await fetch(`${WORKER_URL}/api/save`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem('admin_session') },
                     body: JSON.stringify({ subdomain, type: 'PROXY', content }),
                     credentials: 'include'
                 });

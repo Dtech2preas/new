@@ -62,7 +62,7 @@ export default {
         }
 
         if (url.pathname === '/api/captures' && request.method === 'GET') {
-            return respond(await handleGetCaptures(env));
+            return respond(await handleGetCaptures(request, env));
         }
 
         if (url.pathname === '/api/admin/templates') {
@@ -375,16 +375,32 @@ async function handleCaptureRequest(request, env) {
 }
 
 
-async function handleGetCaptures(env) {
+async function handleGetCaptures(request, env) {
   try {
-    const list = await env.SUBDOMAINS.list({ prefix: "capture::" });
-    const keys = list.keys.slice(-20).reverse();
+    const url = new URL(request.url);
+    const limit = parseInt(url.searchParams.get('limit')) || 20;
+    const cursor = url.searchParams.get('cursor') || undefined;
+
+    const list = await env.SUBDOMAINS.list({ prefix: "capture::", limit: limit, cursor: cursor });
+
+    // Sort keys by timestamp descending if possible, or just reverse the batch
+    const keys = list.keys.reverse();
+
     const promises = keys.map(async (k) => {
         const val = await env.SUBDOMAINS.get(k.name, { type: "json" });
         return { key: k.name, ...val };
     });
     const results = await Promise.all(promises);
-    return new Response(JSON.stringify({ success: true, data: results }), { headers: { 'Content-Type': 'application/json' } });
+
+    // Sort results by timestamp descending
+    results.sort((a, b) => b.timestamp - a.timestamp);
+
+    return new Response(JSON.stringify({
+        success: true,
+        data: results,
+        cursor: list.cursor,
+        list_complete: list.list_complete
+    }), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
      return jsonError(err.message, 500);
   }
