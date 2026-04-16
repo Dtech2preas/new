@@ -417,8 +417,15 @@
                 </div>
             </header>
 
+        <div id="trial-banner" class="hidden mb-6 p-4 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)] backdrop-blur-md animate-[fadeIn_0.5s_ease] flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-white text-lg">🎁 Try Premium for Free!</h3>
+                <p class="text-sm text-gray-300">Upgrade to our Premium plan for 3 days absolutely free. No credit card required.</p>
+            </div>
+            <button onclick="startFreeTrial()" class="px-5 py-2 bg-[var(--accent)] text-white font-bold rounded-lg hover:bg-[var(--accent-hover)] transition-all">Claim Trial</button>
+        </div>
 
-                <div id="locked-msg" class="hidden mb-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-500 backdrop-blur-md animate-[fadeIn_0.5s_ease]">
+        <div id="locked-msg" class="hidden mb-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-500 backdrop-blur-md animate-[fadeIn_0.5s_ease]">
             <h3>⛔ ACCOUNT LOCKED</h3>
             <p>Your previous payment was declined. Access is restricted. Please submit a valid voucher.</p>
         </div>
@@ -810,6 +817,45 @@
 
             if (data.pendingPlan === 'premium') {
                 document.getElementById('pending-premium-msg').style.display = 'block';
+            }
+
+            // Show trial banner if eligible
+            const trialBanner = document.getElementById('trial-banner');
+            if (trialBanner) {
+                // If the user has never used a trial, data.user?.trial_used isn't returned natively via this endpoint usually,
+                // but let's check if the plan is free and it's a new account (or we can assume any 'free' plan not locked is eligible).
+                // Actually, the backend should probably send trial_used, but we can do a best effort check.
+                if (plan === 'free' && (!data.activityLog || !data.activityLog.some(log => log.action === "Started 3-Day Premium Trial"))) {
+                    // Let's show the banner. The backend will validate trial_used.
+                    trialBanner.classList.remove('hidden');
+                } else {
+                    trialBanner.classList.add('hidden');
+                }
+            }
+        }
+
+        async function startFreeTrial() {
+            try {
+                const token = localStorage.getItem('session_token');
+                const headers = {};
+                if(token) headers['Authorization'] = `Bearer ${token}`;
+
+                const res = await fetch(`${WORKER_URL}/api/auth/start-trial`, {
+                    method: 'POST',
+                    headers: headers
+                });
+
+                const result = await res.json();
+                if (result.success) {
+                    notify("Trial activated! You now have Premium access.", "success");
+                    document.getElementById('trial-banner').classList.add('hidden');
+                    fetchCaptures(1); // Refresh data
+                } else {
+                    notify(result.error || "Failed to start trial.", "error");
+                    document.getElementById('trial-banner').classList.add('hidden'); // hide it so they don't keep clicking
+                }
+            } catch (e) {
+                notify("Network error starting trial.", "error");
             }
         }
 
