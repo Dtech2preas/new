@@ -246,7 +246,8 @@
         <div class="grid md:grid-cols-2 gap-6 mt-8">
             <div class="glass-card p-5 border border-[var(--border)] rounded-2xl">
                 <div class="flex items-center gap-3 mb-3"><div class="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">🗄️</div><h3 class="font-semibold">Data Retention</h3></div>
-                <div class="bg-[var(--bg-main)] p-4 rounded-xl flex justify-between items-center"><div><p class="font-medium">Clear Local Storage</p><p class="text-xs text-gray-400">Reset hidden fields & preferences</p></div><button onclick="clearSiteData()" class="px-4 py-2 text-sm border border-red-500/30 rounded-lg hover:bg-red-500/10">Clear Data</button></div>
+                <div class="bg-[var(--bg-main)] p-4 rounded-xl flex justify-between items-center mb-3"><div><p class="font-medium">Clear Preferences</p><p class="text-xs text-gray-400">Reset hidden fields</p></div><button onclick="clearSiteData()" class="px-4 py-2 text-sm border border-red-500/30 rounded-lg hover:bg-red-500/10">Clear</button></div>
+                <div class="bg-[var(--bg-main)] p-4 rounded-xl flex justify-between items-center"><div><p class="font-medium">Clear Residual Data</p><p class="text-xs text-gray-400">Fix unauthorized & mismatch errors</p></div><button onclick="clearResidualData()" class="px-4 py-2 text-sm border border-red-500/30 rounded-lg hover:bg-red-500/10">Clear All</button></div>
             </div>
             <div class="glass-card p-5 border border-[var(--border)] rounded-2xl">
                 <div class="flex items-center gap-3 mb-3"><div class="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">🔒</div><h3 class="font-semibold">Security Activity</h3></div>
@@ -317,7 +318,7 @@
                 if (result.plan === 'free') triggerAds();
             } else notify(result.error || 'Failed to load', 'error');
         } catch(e) { console.error(e); notify('Network error', 'error'); document.getElementById('loader').style.display = 'none'; document.getElementById('main-content').style.display = 'block'; }
-        finally { isLoadingMore = false; }
+        finally { isLoadingMore = false; document.getElementById('loader').style.display = 'none'; }
     }
 
     function updateUI(data) {
@@ -420,6 +421,14 @@
     function toggleFieldVisibility(domain,key,hide){ try{ let store=JSON.parse(localStorage.getItem('dtech_hidden_fields')||'{}'); let arr=store[domain]||[]; if(hide && !arr.includes(key)) arr.push(key); else if(!hide) arr=arr.filter(k=>k!==key); store[domain]=arr; localStorage.setItem('dtech_hidden_fields',JSON.stringify(store)); fetchCaptures(currentPage); }catch(e){} }
     function restoreHiddenFields(domain){ try{ let store=JSON.parse(localStorage.getItem('dtech_hidden_fields')||'{}'); if(store[domain]) delete store[domain]; localStorage.setItem('dtech_hidden_fields',JSON.stringify(store)); fetchCaptures(currentPage); }catch(e){} }
     function clearSiteData(){ if(confirm("Clear all hidden field preferences & local cache?")){ localStorage.removeItem('dtech_hidden_fields'); notify("Preferences reset","success"); fetchCaptures(currentPage); } }
+
+    function clearResidualData() {
+        if(confirm("Clear all residual data? This will log you out and clear any old state causing mismatch errors.")) {
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = 'index.html';
+        }
+    }
 
     function downloadData(){ let filter=document.getElementById('site-filter').value; let exportData={header:"PREASX24 EXPORT",generated:new Date().toISOString(),source:filter,captures:currentData.filter(i=>filter==='all'||(i.data?.url||'').includes(`//${filter}.`)).map(i=>({timestamp:i.timestamp,url:i.data?.url,data:i.data?.formData}))}; let a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(exportData,null,2)); a.download=`captures_${filter}.json`; a.click(); notify("JSON exported","success"); }
     function downloadCSV(){ let filter=document.getElementById('site-filter').value; let items=currentData.filter(i=>filter==='all'||(i.data?.url||'').includes(`//${filter}.`)); if(!items.length){ notify("No data","error"); return; } let headers=new Set(); let rows=items.map(i=>{ let row={timestamp:i.timestamp,url:i.data?.url}; Object.entries(i.data?.formData||{}).forEach(([k,v])=>{ row[k]=v; headers.add(k); }); return row; }); let headerArr=['timestamp','url',...Array.from(headers)]; let csv=[headerArr.join(','),...rows.map(r=>headerArr.map(h=>JSON.stringify(r[h]||'')).join(','))].join('\n'); let blob=new Blob([csv],{type:'text/csv'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`captures_${filter}.csv`; a.click(); notify("CSV exported","success"); }

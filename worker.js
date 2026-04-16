@@ -114,6 +114,10 @@ export default {
         return respond(await handleSetUsername(request, env));
     }
 
+    if (url.pathname === '/api/auth/start-trial' && request.method === 'POST') {
+        return respond(await handleStartTrial(request, env));
+    }
+
     if (url.pathname === '/api/public/captures') {
         if (request.method === 'GET') return respond(await handleGetPublicCaptures(request, env));
         if (request.method === 'DELETE') return respond(await handleDeletePublicCapture(request, env));
@@ -1006,12 +1010,12 @@ async function handleUserRegister(request, env) {
         // Create User
         const user = {
             username: username,
-            plan: 'premium',
+            plan: 'free',
             strikes: 0,
             status: 'active',
             created: Date.now(),
-            expiry: Date.now() + (3 * 24 * 60 * 60 * 1000),
-            trial_used: true,
+            expiry: null,
+            trial_used: false,
             activityLog: []
         };
         await saveUser(env, uniqueCode, user);
@@ -1071,6 +1075,30 @@ async function handleUserLogin(request, env) {
     }
 }
 
+
+async function handleStartTrial(request, env) {
+    try {
+        const code = await verifySessionToken(request, env);
+        if (!code) return jsonError("Unauthorized", 401);
+
+        const user = await getUser(env, code);
+
+        if (user.trial_used) {
+            return jsonError("You have already used your free trial.");
+        }
+
+        user.plan = 'premium';
+        user.expiry = Date.now() + (3 * 24 * 60 * 60 * 1000);
+        user.trial_used = true;
+
+        await saveUser(env, code, user);
+        await logActivity(env, code, request, "Started 3-Day Premium Trial");
+
+        return new Response(JSON.stringify({ success: true, user: user }), { headers: { 'Content-Type': 'application/json' } });
+    } catch (e) {
+        return jsonError(e.message, 500);
+    }
+}
 
 async function handleSetUsername(request, env) {
     try {
