@@ -294,7 +294,9 @@
 
 
                 let urlStr = "Unknown";
-                if (payload && payload.url) {
+                if (item.data && item.data.url) {
+                    urlStr = item.data.url;
+                } else if (payload && payload.url) {
                     urlStr = payload.url;
                 } else if (item && item.url) {
                     urlStr = item.url;
