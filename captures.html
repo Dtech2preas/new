@@ -293,19 +293,28 @@
                 dataHtml += '</div>';
 
 
-                let subdomainStr = "Unknown";
+                let urlStr = "Unknown";
                 if (payload && payload.url) {
-                    try {
-                        const urlObj = new URL(payload.url);
-                        subdomainStr = urlObj.hostname;
-                    } catch(e) {}
+                    urlStr = payload.url;
+                } else if (item && item.url) {
+                    urlStr = item.url;
                 }
+
+                const safeUrl = String(urlStr).replace(/[&<>"']/g, function(m) {
+                    return {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#39;'
+                    }[m];
+                });
 
                 const timeCell = document.createElement('td');
                 timeCell.className = 'align-top';
                 timeCell.innerHTML = `<div class="font-medium text-white mb-1">${timeStr}</div>
                 <div class="text-xs text-gray-500 bg-[#222] inline-block px-2 py-1 rounded mb-1">User: ${uniqueCode}</div>
-                <div class="text-xs text-blue-400 bg-blue-900/20 border border-blue-800/30 inline-block px-2 py-1 rounded">Site: ${subdomainStr}</div>`;
+                <div class="text-xs text-blue-400 bg-blue-900/20 border border-blue-800/30 inline-block px-2 py-1 rounded">URL: <a href="${safeUrl}" target="_blank" class="hover:underline">${safeUrl}</a></div>`;
 
 
                 const dataCell = document.createElement('td');
