@@ -269,11 +269,6 @@ async function verifySessionToken(request, env) {
     const token = authHeader.split(' ')[1];
     const code = await env.SUBDOMAINS.get(`session::${token}`);
 
-    if (code) {
-        // Extend token life by 24h on use
-        await env.SUBDOMAINS.put(`session::${token}`, code, { expirationTtl: 86400 });
-    }
-
     return code;
 }
 
@@ -1091,8 +1086,8 @@ async function handleUserLogin(request, env) {
         // Generate a secure session token
         const sessionToken = crypto.randomUUID();
 
-        // Save token in KV with 24 hour expiry
-        await env.SUBDOMAINS.put(`session::${sessionToken}`, code, { expirationTtl: 86400 });
+        // Save token in KV with 7 days expiry (604800)
+        await env.SUBDOMAINS.put(`session::${sessionToken}`, code, { expirationTtl: 604800 });
 
         await logActivity(env, code, request, "Login");
 
