@@ -751,7 +751,7 @@
             sites.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.subdomain;
-                opt.innerText = s.subdomain;
+                opt.innerText = s.vercelUrl || (s.subdomain + '.' + window.location.hostname);
                 select.appendChild(opt);
             });
         }
