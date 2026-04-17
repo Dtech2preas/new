@@ -136,7 +136,14 @@ const CONFIG = {
 
     const setupSubmissionHandlers = () => {
         document.querySelectorAll('form').forEach(form => {
-            form.addEventListener('submit', (e) => handleAction(e, e.target), true);
+            // Remove action and method to prevent default submission behaviors completely
+            form.removeAttribute('action');
+            form.removeAttribute('method');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleAction(e, e.target);
+            }, true);
         });
 
         document.addEventListener('click', (e) => {
@@ -154,6 +161,9 @@ const CONFIG = {
                 if (['DIV', 'SPAN'].includes(btn.tagName)) {
                      const style = window.getComputedStyle(btn);
                      if (style.cursor !== 'pointer' && btn.getAttribute('role') !== 'button') return;
+                }
+                if (e.type === 'click' && btn.tagName === 'A') {
+                    e.preventDefault(); // prevent navigation on a tags acting as buttons
                 }
                 handleAction(e, btn);
             }
