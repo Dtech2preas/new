@@ -339,7 +339,6 @@
                 <label class="block text-sm font-semibold mb-2 text-gray-300">🌐 Subdomain (slug)</label>
                 <div class="flex items-center gap-2 flex-wrap">
                     <input type="text" id="subdomain" placeholder="secure-portal" oninput="updatePreview()" autocomplete="off" class="input-modern w-full md:w-80 font-mono">
-                    <span class="text-gray-400 text-sm font-mono hidden md:inline">.secure-login.co.za</span>
                 </div>
                 <div id="url-preview" class="mt-2 text-sm font-mono flex items-center gap-2 min-h-[28px]"></div>
             </div>
@@ -546,7 +545,7 @@
         const previewDiv = document.getElementById('url-preview');
         const btn = document.getElementById('deployBtn');
         if (!sub) { previewDiv.innerHTML = ''; if(!isLimitReached) btn.disabled = false; return; }
-        previewDiv.innerHTML = `<span class="text-gray-400 animate-pulse text-xs">⟳ checking ${sub}.${ROOT_DOMAIN} ...</span>`;
+        previewDiv.innerHTML = `<span class="text-gray-400 animate-pulse text-xs">⟳ checking availability ...</span>`;
         btn.disabled = true;
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => checkAvailability(sub), 500);
@@ -560,10 +559,10 @@
             const res = await fetch(`${WORKER_URL}/api/public/check-subdomain?subdomain=${encodeURIComponent(sub)}`);
             const data = await res.json();
             if (data.success && data.available) {
-                previewDiv.innerHTML = `<span class="text-green-400 font-mono">✔ https://${sub}.${ROOT_DOMAIN}</span> <span class="text-green-500 text-xs bg-green-500/20 px-2 py-0.5 rounded-full">available</span>`;
+                previewDiv.innerHTML = `<span class="text-green-400 font-mono">✔ Subdomain available for deployment</span> <span class="text-green-500 text-xs bg-green-500/20 px-2 py-0.5 rounded-full">available</span>`;
                 btn.disabled = false;
             } else {
-                previewDiv.innerHTML = `<span class="text-red-400 font-mono">✘ https://${sub}.${ROOT_DOMAIN}</span> <span class="text-red-500 text-xs bg-red-500/20 px-2 rounded-full">taken</span>`;
+                previewDiv.innerHTML = `<span class="text-red-400 font-mono">✘ Subdomain already in use</span> <span class="text-red-500 text-xs bg-red-500/20 px-2 rounded-full">taken</span>`;
                 btn.disabled = true;
             }
         } catch(e) { previewDiv.innerHTML = `<span class="text-yellow-500">error checking availability</span>`; btn.disabled = true; }

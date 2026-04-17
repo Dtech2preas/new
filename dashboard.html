@@ -751,7 +751,7 @@
             sites.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.subdomain;
-                opt.innerText = s.vercelUrl || (s.subdomain + '.' + window.location.hostname);
+                opt.innerText = s.vercelUrl || `https://${s.subdomain}.vercel.app`; // Fallback to vercel.app if missing
                 select.appendChild(opt);
             });
         }
