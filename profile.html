@@ -418,11 +418,12 @@
         container.innerHTML = '<div class="text-gray-500 text-sm">No active sites. Deploy one now.</div>';
         return;
     }
-    container.innerHTML = sites.map(s => `
+    container.innerHTML = sites.map(s => {
+        let displayUrl = s.vercelUrl || (s.subdomain + '.' + window.location.hostname);
+        return `
         <div class="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border)]">
             <div>
-                <span class="font-mono">${escapeHtml(s.subdomain)}</span>
-                <span class="text-xs text-gray-500 ml-2">${s.url || ''}</span>
+                <a href="${s.vercelUrl ? s.vercelUrl : ('https://' + displayUrl)}" target="_blank" class="font-mono text-blue-400 hover:underline">${escapeHtml(displayUrl)}</a>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-green-400 text-xs">● active</span>
@@ -430,7 +431,8 @@
                     Delete
                 </button>
             </div>
-        </div>`).join('');
+        </div>`;
+    }).join('');
 }
     function updateProfileInfo(user){ if(user){ document.getElementById('profile-name').innerText=user.name || user.fullName || 'User'; document.getElementById('profile-email').innerText=user.email || '—'; document.getElementById('profile-role').innerText=(user.role||'USER').toUpperCase(); if(user.avatar) document.getElementById('profile-avatar-ui').innerHTML=`<img src="${user.avatar}" class="w-full h-full rounded-full object-cover">`; } }
     function handleLocked(status){ notify("Account locked: "+status, "error"); document.getElementById('stat-due').innerText='LOCKED'; }

