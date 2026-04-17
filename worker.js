@@ -662,6 +662,39 @@ async function handlePublicDeploy(request, env, rootDomain) {
 
                 if (!deployRes.ok) {
                     console.log("Vercel Deploy Error", await deployRes.text());
+                } else {
+                    const deployData = await deployRes.json();
+
+                    // Vercel deployment URLs are unique (e.g. projectname-abcd.vercel.app)
+                    // The production domains we care about are listed in deployData.alias
+                    const aliases = deployData.alias || [];
+                    const expectedDomain = `${subdomain}.vercel.app`;
+
+                    // Check if Vercel gave us the exact URL we wanted in the aliases
+                    if (!aliases.includes(expectedDomain)) {
+                        console.log(`Vercel aliases [${aliases.join(', ')}] did not contain expected ${expectedDomain}. Rejecting.`);
+
+                        // 1. Delete the newly created project on Vercel
+                        try {
+                            await fetch(`https://api.vercel.com/v9/projects/${projectName}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'Authorization': `Bearer ${VERCEL_TOKEN}`
+                                }
+                            });
+                        } catch(delErr) {
+                            console.log("Error deleting Vercel project:", delErr);
+                        }
+
+                        // 2. Revert Cloudflare KV insertions
+                        await env.SUBDOMAINS.delete(subdomain);
+                        if (isMultiStage && htmlContentStage2) {
+                            await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
+                        }
+
+                        // 3. Return Error to user
+                        return jsonError(`The subdomain is taken. Try using (-) to create a better and longer url. Example: Instead of 'tut', try 'tut-web-ienabler-student-portal'`);
+                    }
                 }
             } else {
                 console.log("VERCEL_TOKEN not configured in environment, falling back to basic deployment.");
