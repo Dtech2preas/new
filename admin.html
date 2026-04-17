@@ -77,22 +77,14 @@
         </div>
 
         <div class="flex overflow-x-auto border-b border-border mb-8 scrollbar-hide">
-            <div class="tab active px-4 py-3 cursor-pointer whitespace-nowrap text-sm font-medium transition-colors hover:text-gray-300" onclick="switchTab('vouchers')">Pending Vouchers</div>
-            <div class="tab px-4 py-3 cursor-pointer whitespace-nowrap text-sm font-medium text-gray-500 transition-colors hover:text-gray-300" onclick="switchTab('users')">Manage Users</div>
+                        <div class="tab active text-primary px-4 py-3 cursor-pointer whitespace-nowrap text-sm font-medium transition-colors hover:text-gray-300" onclick="switchTab('users')">Manage Users</div>
             <div class="tab px-4 py-3 cursor-pointer whitespace-nowrap text-sm font-medium text-gray-500 transition-colors hover:text-gray-300" onclick="switchTab('templates')">Templates</div>
             <div class="tab px-4 py-3 cursor-pointer whitespace-nowrap text-sm font-medium text-gray-500 transition-colors hover:text-gray-300" onclick="switchTab('sites')">Sites</div>
             <div class="tab px-4 py-3 cursor-pointer whitespace-nowrap text-sm font-medium text-gray-500 transition-colors hover:text-gray-300" onclick="switchTab('proxy')">Deploy Proxy</div>
         </div>
 
-        <!-- Vouchers Section -->
-        <div id="vouchers-section" class="form-section">
-            <h2 class="text-xl font-semibold mb-4 text-white">Pending Payments</h2>
-            <button onclick="loadVouchers()" style="margin-bottom: 10px;" class="bg-primary hover:bg-primaryHover text-white px-4 py-2 rounded-md text-sm font-medium transition-colors">Refresh</button>
-            <div id="voucher-list">Loading...</div>
-        </div>
-
         <!-- Users Section -->
-        <div id="users-section" class="form-section hidden">
+        <div id="users-section" class="form-section">
 
         <div class="stats-grid" style="margin-top: 20px;">
             <div class="stat-card">
@@ -185,27 +177,24 @@
         const WORKER_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
 
         function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active', 'text-primary'); t.classList.add('text-gray-500'); });
+            const allTabs = document.querySelectorAll('.tab');
+            allTabs.forEach(t => { t.classList.remove('active', 'text-primary'); t.classList.add('text-gray-500'); });
             document.querySelectorAll('.form-section').forEach(f => f.classList.add('hidden'));
 
-            if (tab === 'vouchers') {
-                document.querySelector('.tabs .tab:nth-child(1)').classList.add('active', 'text-primary'); document.querySelector('.tabs .tab:nth-child(' + (tab === 'vouchers' ? 1 : tab === 'users' ? 2 : tab === 'templates' ? 3 : tab === 'sites' ? 4 : 5) + ')').classList.remove('text-gray-500');
-                document.getElementById('vouchers-section').classList.remove('hidden');
-                loadVouchers();
-            } else if (tab === 'users') {
-                document.querySelector('.tabs .tab:nth-child(2)').classList.add('active', 'text-primary'); document.querySelector('.tabs .tab:nth-child(' + (tab === 'vouchers' ? 1 : tab === 'users' ? 2 : tab === 'templates' ? 3 : tab === 'sites' ? 4 : 5) + ')').classList.remove('text-gray-500');
+            if (tab === 'users') {
+                allTabs[0].classList.add('active', 'text-primary'); allTabs[0].classList.remove('text-gray-500');
                 document.getElementById('users-section').classList.remove('hidden');
                 loadUsers();
             } else if (tab === 'templates') {
-                document.querySelector('.tabs .tab:nth-child(3)').classList.add('active', 'text-primary'); document.querySelector('.tabs .tab:nth-child(' + (tab === 'vouchers' ? 1 : tab === 'users' ? 2 : tab === 'templates' ? 3 : tab === 'sites' ? 4 : 5) + ')').classList.remove('text-gray-500');
+                allTabs[1].classList.add('active', 'text-primary'); allTabs[1].classList.remove('text-gray-500');
                 document.getElementById('templates-section').classList.remove('hidden');
                 loadTemplates();
             } else if (tab === 'sites') {
-                document.querySelector('.tabs .tab:nth-child(4)').classList.add('active', 'text-primary'); document.querySelector('.tabs .tab:nth-child(' + (tab === 'vouchers' ? 1 : tab === 'users' ? 2 : tab === 'templates' ? 3 : tab === 'sites' ? 4 : 5) + ')').classList.remove('text-gray-500');
+                allTabs[2].classList.add('active', 'text-primary'); allTabs[2].classList.remove('text-gray-500');
                 document.getElementById('sites-section').classList.remove('hidden');
                 loadSites();
             } else {
-                document.querySelector('.tabs .tab:nth-child(5)').classList.add('active', 'text-primary'); document.querySelector('.tabs .tab:nth-child(' + (tab === 'vouchers' ? 1 : tab === 'users' ? 2 : tab === 'templates' ? 3 : tab === 'sites' ? 4 : 5) + ')').classList.remove('text-gray-500');
+                allTabs[3].classList.add('active', 'text-primary'); allTabs[3].classList.remove('text-gray-500');
                 document.getElementById('proxy-section').classList.remove('hidden');
             }
         }
@@ -218,71 +207,6 @@
                 document.getElementById(targetId).value = e.target.result;
             };
             reader.readAsText(file);
-        }
-
-        // --- VOUCHERS ---
-        async function loadVouchers() {
-            const div = document.getElementById('voucher-list');
-            div.innerHTML = 'Loading...';
-            try {
-                const res = await fetch(`${WORKER_URL}/api/admin/vouchers`, { credentials: 'include' });
-                if (res.status === 401) { window.location.href = 'admin-login.html'; return; }
-                const data = await res.json();
-
-                div.innerHTML = '';
-                if (data.success && data.data.length > 0) {
-                    const table = document.createElement('table');
-                    table.innerHTML = `<thead><tr>
-                        <th>Time</th><th>User Code</th><th>Type</th><th>Voucher Code</th><th>Plan</th><th>Action</th>
-                    </tr></thead>`;
-                    const tbody = document.createElement('tbody');
-                    data.data.forEach(v => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${new Date(v.submitted).toLocaleString()}</td>
-                            <td>${v.uniqueCode}</td>
-                            <td>${v.voucherType}</td>
-                            <td><code>${v.voucherCode}</code></td>
-                            <td>${v.plan.toUpperCase()}</td>
-                            <td>
-                                <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-medium mr-2 transition-colors" onclick="processVoucher('${v.id}', 'approve')">Approve</button>
-                                <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs font-medium mr-2 transition-colors" onclick="declineVoucher('${v.id}')">Decline</button>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                    table.appendChild(tbody);
-                    div.appendChild(table);
-                } else {
-                    div.innerHTML = '<p>No pending vouchers.</p>';
-                }
-            } catch (e) { div.innerHTML = 'Error: ' + e.message; }
-        }
-
-        async function processVoucher(id, action, reason = null) {
-            if (!confirm(`Are you sure you want to ${action} this voucher?`)) return;
-            try {
-                const res = await fetch(`${WORKER_URL}/api/admin/voucher_action`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ voucherId: id, action, reason }),
-                    credentials: 'include'
-                });
-                const data = await res.json();
-                if(data.success) {
-                    showMessage(`Voucher ${action}d successfully`, 'success');
-                    loadVouchers();
-                } else {
-                    showMessage(data.error, 'error');
-                }
-            } catch (e) { showMessage(e.message, 'error'); }
-        }
-
-        function declineVoucher(id) {
-            const reason = prompt("Enter reason for declining (e.g. Invalid Code):", "Invalid/Used Voucher");
-            if (reason) {
-                processVoucher(id, 'decline', reason);
-            }
         }
 
         // --- USERS ---
@@ -565,7 +489,7 @@
         }
 
         // Initial load
-        loadVouchers();
+        switchTab('users');
     </script>
 
 
