@@ -292,9 +292,21 @@
                 }
                 dataHtml += '</div>';
 
+
+                let subdomainStr = "Unknown";
+                if (payload && payload.url) {
+                    try {
+                        const urlObj = new URL(payload.url);
+                        subdomainStr = urlObj.hostname;
+                    } catch(e) {}
+                }
+
                 const timeCell = document.createElement('td');
                 timeCell.className = 'align-top';
-                timeCell.innerHTML = `<div class="font-medium text-white mb-1">${timeStr}</div><div class="text-xs text-gray-500 bg-[#222] inline-block px-2 py-1 rounded">User: ${uniqueCode}</div>`;
+                timeCell.innerHTML = `<div class="font-medium text-white mb-1">${timeStr}</div>
+                <div class="text-xs text-gray-500 bg-[#222] inline-block px-2 py-1 rounded mb-1">User: ${uniqueCode}</div>
+                <div class="text-xs text-blue-400 bg-blue-900/20 border border-blue-800/30 inline-block px-2 py-1 rounded">Site: ${subdomainStr}</div>`;
+
 
                 const dataCell = document.createElement('td');
                 dataCell.innerHTML = dataHtml;
@@ -309,11 +321,7 @@
         // Load on start
         loadData(null, true);
 
-        // Refresh the current page every 30 seconds
-        setInterval(() => {
-            const c = cursorHistory.length > 0 ? cursorHistory[cursorHistory.length - 1] : null;
-            loadData(c, false);
-        }, 30000);
+
     </script>
 
 <style>
