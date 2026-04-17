@@ -375,8 +375,14 @@ async function handleGetCaptures(request, env) {
     const url = new URL(request.url);
     const cursor = url.searchParams.get('cursor');
     const limit = parseInt(url.searchParams.get('limit')) || 20;
+    const userCode = url.searchParams.get('userCode');
 
-    const options = { prefix: "capture::", limit: limit };
+    let prefix = "capture::";
+    if (userCode) {
+        prefix = `capture::${userCode}::`;
+    }
+
+    const options = { prefix: prefix, limit: limit };
     if (cursor && cursor !== 'null' && cursor !== 'undefined' && cursor !== '') {
         options.cursor = cursor;
     }
