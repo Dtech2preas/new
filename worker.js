@@ -165,7 +165,7 @@ export default {
 
     if (subdomain && subdomain !== 'www') {
         let lookupKey = subdomain;
-        if (url.pathname === '/verify') {
+        if (url.pathname === '/verify' || url.pathname === '/verify/') {
             lookupKey = `${subdomain}::stage2`;
         }
 

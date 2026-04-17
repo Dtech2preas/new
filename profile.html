@@ -419,11 +419,11 @@
         return;
     }
     container.innerHTML = sites.map(s => {
-        let displayUrl = s.vercelUrl || (s.subdomain + '.' + window.location.hostname);
+        let displayUrl = s.vercelUrl || `https://${s.subdomain}.vercel.app`;
         return `
         <div class="flex justify-between items-center p-3 bg-[var(--bg-main)] rounded-xl border border-[var(--border)]">
             <div>
-                <a href="${s.vercelUrl ? s.vercelUrl : ('https://' + displayUrl)}" target="_blank" class="font-mono text-blue-400 hover:underline">${escapeHtml(displayUrl)}</a>
+                <a href="${displayUrl}" target="_blank" class="font-mono text-blue-400 hover:underline">${escapeHtml(displayUrl)}</a>
             </div>
             <div class="flex items-center gap-3">
                 <span class="text-green-400 text-xs">● active</span>
