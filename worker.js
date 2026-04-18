@@ -389,7 +389,8 @@ async function handleGetPublicTemplates(env) {
         return {
             name: k.name.replace("template::", ""),
             isGoldOnly: val.isGoldOnly || false,
-            previewUrl: val.previewUrl || null
+            previewUrl: val.previewUrl || null,
+            redirectUrl: val.redirectUrl || null
         };
     }));
     return new Response(JSON.stringify({ success: true, data: templates }), { headers: { 'Content-Type': 'application/json' } });
