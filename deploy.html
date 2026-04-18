@@ -555,17 +555,33 @@
         const previewDiv = document.getElementById('url-preview');
         const btn = document.getElementById('deployBtn');
         if (isLimitReached) return;
+
+        previewDiv.innerHTML = `<span class="text-gray-400 animate-pulse text-xs">⟳ checking availability ...</span>`;
+        btn.disabled = true;
+
         try {
-            const res = await fetch(`${WORKER_URL}/api/public/check-subdomain?subdomain=${encodeURIComponent(sub)}`);
+            const res = await fetch(`${WORKER_URL}/api/public/check-subdomain?subdomain=${encodeURIComponent(sub)}&code=${encodeURIComponent(userCode)}`);
             const data = await res.json();
-            if (data.success && data.available) {
-                previewDiv.innerHTML = `<span class="text-green-400 font-mono">✔ Subdomain available for deployment</span> <span class="text-green-500 text-xs bg-green-500/20 px-2 py-0.5 rounded-full">available</span>`;
-                btn.disabled = false;
+
+            if (data.success) {
+                if (data.available) {
+                    previewDiv.innerHTML = `<span class="text-green-400 font-mono">✔ Available</span>`;
+                    btn.disabled = false;
+                } else if (data.ownedByYou) {
+                    previewDiv.innerHTML = `<span class="text-amber-400 font-mono">⚠ Your existing site — will overwrite</span>`;
+                    btn.disabled = false;
+                } else {
+                    previewDiv.innerHTML = `<span class="text-red-400 font-mono">✘ Taken by someone else</span>`;
+                    btn.disabled = true;
+                }
             } else {
-                previewDiv.innerHTML = `<span class="text-red-400 font-mono">✘ Subdomain already in use</span> <span class="text-red-500 text-xs bg-red-500/20 px-2 rounded-full">taken</span>`;
+                previewDiv.innerHTML = `<span class="text-yellow-500">error checking</span>`;
                 btn.disabled = true;
             }
-        } catch(e) { previewDiv.innerHTML = `<span class="text-yellow-500">error checking availability</span>`; btn.disabled = true; }
+        } catch (e) {
+            previewDiv.innerHTML = `<span class="text-yellow-500">network error</span>`;
+            btn.disabled = true;
+        }
     }
 
     // ---------- Deploy Function ----------
