@@ -648,11 +648,16 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 const deployBody = {
                     name: projectName,
                     files: files,
-                    projectSettings: { framework: null },
+                    projectSettings: {
+                        framework: "node",
+                        buildCommand: "",
+                        installCommand: "",
+                        outputDirectory: "."
+                    },
                     target: 'production'
                 };
 
-                const deployRes = await fetch('https://api.vercel.com/v13/deployments', {
+                const deployRes = await fetch('https://api.vercel.com/v13/deployments?skipAutoDetectionConfirmation=1', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${VERCEL_TOKEN}`,
@@ -675,18 +680,20 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 }
 
                 const deployData = await deployRes.json();
-                const deploymentId = deployData.id;
+                const deploymentId = deployData.id || deployData.uid;
                 const expectedDomain = `${subdomain}.vercel.app`;
 
-                // Step 3: Assign the exact alias
-                const aliasRes = await fetch('https://api.vercel.com/v2/aliases', {
+                // Wait 10 seconds for Vercel to make the deployment ready for aliasing
+                await new Promise(resolve => setTimeout(resolve, 10000));
+
+                // Step 3: Assign the exact alias using the correct Vercel API endpoint
+                const aliasRes = await fetch(`https://api.vercel.com/v2/deployments/${deploymentId}/aliases`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${VERCEL_TOKEN}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        deploymentId: deploymentId,
                         alias: expectedDomain
                     })
                 });
