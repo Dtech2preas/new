@@ -686,41 +686,31 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 // Wait 10 seconds for Vercel to make the deployment ready for aliasing
                 await new Promise(resolve => setTimeout(resolve, 10000));
 
-                // Step 3: Assign the exact alias using the correct Vercel API endpoint
+                // Step 3: Assign alias (now handles "not_modified" correctly)
                 const aliasRes = await fetch(`https://api.vercel.com/v2/deployments/${deploymentId}/aliases`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${VERCEL_TOKEN}`,
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        alias: expectedDomain
-                    })
+                    body: JSON.stringify({ alias: expectedDomain })
                 });
 
-                if (!aliasRes.ok) {
-                    const aliasErrText = await aliasRes.text();
-                    console.log(`Vercel alias assignment failed for ${expectedDomain}:`, aliasErrText);
+                let aliasData = {};
+                if (aliasRes.headers.get('content-type')?.includes('application/json')) {
+                    try { aliasData = await aliasRes.json(); } catch(e) {}
+                }
 
-                    // 1. Delete the newly created project on Vercel
-                    try {
-                        await fetch(`https://api.vercel.com/v9/projects/${projectName}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'Authorization': `Bearer ${VERCEL_TOKEN}`
-                            }
-                        });
-                    } catch(delErr) {
-                        console.log("Error deleting Vercel project:", delErr);
-                    }
+                const aliasSuccess = aliasRes.ok || (aliasData.error && aliasData.error.code === "not_modified");
 
-                    // 2. Revert Cloudflare KV insertions
+                if (!aliasSuccess) {
+                    console.log(`Vercel alias failed for ${expectedDomain}:`, aliasData);
+
+                    // Cleanup
+                    try { await fetch(`https://api.vercel.com/v9/projects/${projectName}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${VERCEL_TOKEN}` }}); } catch(_) {}
                     await env.SUBDOMAINS.delete(subdomain);
-                    if (isMultiStage && htmlContentStage2) {
-                        await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
-                    }
+                    if (isMultiStage && htmlContentStage2) await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
 
-                    // 3. Return Error to user
                     return jsonError(`The subdomain is taken. Try using (-) to create a better and longer url. Example: Instead of 'tut', try 'tut-web-ienabler-student-portal'`);
                 }
             } else {
@@ -888,11 +878,26 @@ async function handleDeletePublicSite(request, env) {
 async function handleCheckSubdomain(request, env) {
     const url = new URL(request.url);
     const subdomain = url.searchParams.get('subdomain');
+    const code = url.searchParams.get('code');   // ← NEW
+
     if (!subdomain) return jsonError("Missing subdomain");
     if (subdomain.length > 63) return new Response(JSON.stringify({ success: false, available: false }), { headers: { 'Content-Type': 'application/json' } });
 
-    const val = await env.SUBDOMAINS.get(subdomain);
-    return new Response(JSON.stringify({ success: true, available: !val }), { headers: { 'Content-Type': 'application/json' } });
+    const val = await env.SUBDOMAINS.get(subdomain, { type: "json" });
+
+    if (!val) {
+        return new Response(JSON.stringify({ success: true, available: true }), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    const ownedByYou = val.ownerCode === code;
+
+    return new Response(JSON.stringify({
+        success: true,
+        available: false,
+        ownedByYou: ownedByYou
+    }), { headers: { 'Content-Type': 'application/json' } });
 }
 
 async function handleDeletePublicCapture(request, env) {
