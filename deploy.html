@@ -575,15 +575,28 @@
         if (!subdomain) { showToast("Enter a unique subdomain", "error"); return; }
         const btn = document.getElementById('deployBtn');
         btn.disabled = true;
-        btn.innerText = "🚀 Deploying...";
+
+        let seconds = 0;
+        btn.innerText = `🚀 Deploying... (${seconds}s)`;
+        const deployInterval = setInterval(() => {
+            seconds++;
+            if (seconds < 5) {
+                btn.innerText = `📦 Preparing files... (${seconds}s)`;
+            } else if (seconds < 10) {
+                btn.innerText = `☁️ Pushing to Vercel... (${seconds}s)`;
+            } else {
+                btn.innerText = `⏳ Setting up alias... (${seconds}s)`;
+            }
+        }, 1000);
+
         const payload = { subdomain, uniqueCode: userCode };
         if (currentMode === 'template') {
             const tmpl = document.getElementById('selectedTemplateName').value;
-            if (!tmpl) { showToast("Select a template first", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; return; }
+            if (!tmpl) { showToast("Select a template first", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; clearInterval(deployInterval); return; }
             payload.templateName = tmpl;
         } else {
             const htmlContent = editor.getValue();
-            if (!htmlContent.trim()) { showToast("Custom HTML cannot be empty", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; return; }
+            if (!htmlContent.trim()) { showToast("Custom HTML cannot be empty", "error"); btn.disabled = false; btn.innerText = "⚡ Deploy Site"; clearInterval(deployInterval); return; }
             payload.customHtml = htmlContent;
             payload.enableInjector = document.getElementById('enableInjector').checked;
             payload.redirectUrl = document.getElementById('customRedirectUrl').value.trim();
@@ -594,6 +607,7 @@
         try {
             const res = await fetch(`${WORKER_URL}/api/public/deploy`, { method: 'POST', headers, body: JSON.stringify(payload) });
             const data = await res.json();
+            clearInterval(deployInterval);
             if (data.success) {
                 localStorage.removeItem('deploy_ad_pass');
                 showSuccessModal(data.url);
@@ -606,6 +620,7 @@
                 btn.innerText = "⚡ Deploy Site";
             }
         } catch (err) {
+            clearInterval(deployInterval);
             showToast("Network error: " + err.message, "error");
             btn.disabled = false;
             btn.innerText = "⚡ Deploy Site";
