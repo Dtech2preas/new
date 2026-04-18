@@ -335,12 +335,27 @@
 
         <!-- Subdomain & Deployment Section -->
         <div class="mt-8 pt-6 border-t border-white/10">
-            <div class="mb-6">
-                <label class="block text-sm font-semibold mb-2 text-gray-300">🌐 Subdomain (slug)</label>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <input type="text" id="subdomain" maxlength="63" placeholder="secure-portal" oninput="updatePreview()" autocomplete="off" class="input-modern w-full md:w-80 font-mono">
+            <div id="template-direct-url-container" class="hidden mb-6 bg-blue-900/20 border border-blue-500/30 p-4 rounded-xl">
+                <label class="block text-xs font-semibold uppercase tracking-wide text-blue-300 mb-1">🔗 Template Direct URL</label>
+                <a href="#" id="template-direct-url" target="_blank" class="text-blue-400 font-mono text-sm break-all hover:underline"></a>
+            </div>
+
+            <div class="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-300">🌐 Subdomain (slug)</label>
+                    <input type="text" id="subdomain" maxlength="63" placeholder="secure-portal" oninput="updatePreview()" autocomplete="off" class="input-modern w-full font-mono">
+                    <div id="url-preview" class="mt-2 text-sm font-mono flex items-center gap-2 min-h-[28px]"></div>
                 </div>
-                <div id="url-preview" class="mt-2 text-sm font-mono flex items-center gap-2 min-h-[28px]"></div>
+                <div>
+                    <label class="block text-sm font-semibold mb-2 text-gray-300"># Fragment (Optional)</label>
+                    <input type="text" id="fragment" placeholder="login" oninput="updatePreview()" autocomplete="off" class="input-modern w-full font-mono">
+                    <div id="fragment-preview" class="mt-2 text-sm font-mono flex items-center gap-2 min-h-[28px]"></div>
+                </div>
+            </div>
+
+            <div class="mb-6 bg-black/40 p-3 rounded-xl border border-white/10">
+                <label class="block text-xs font-semibold text-gray-400 mb-1 uppercase tracking-wide">Final URL Preview</label>
+                <div id="final-url-preview" class="text-blue-400 font-mono text-sm break-all">https://{subdomain}.vercel.app/#{fragment}</div>
             </div>
 
             <div class="mb-8 bg-black/30 rounded-xl p-4 border border-white/5">
@@ -477,8 +492,9 @@
                 const name = typeof tmpl === 'object' ? tmpl.name : tmpl;
                 const isGold = (typeof tmpl === 'object' && tmpl.isGoldOnly) || (name.includes("Gold") ? true : false);
                 const previewUrl = (typeof tmpl === 'object' && tmpl.previewUrl) ? tmpl.previewUrl : `https://placehold.co/600x400/111827/3b82f6?text=${encodeURIComponent(name)}+Preview`;
+                const redirectUrl = (typeof tmpl === 'object' && tmpl.redirectUrl) ? tmpl.redirectUrl : '';
                 const isLocked = (isGold && userPlan !== 'gold');
-                templatesMap[name] = { isGold, preview: previewUrl };
+                templatesMap[name] = { isGold, preview: previewUrl, redirectUrl };
                 
                 const card = document.createElement('div');
                 card.className = `template-card ${isLocked ? 'disabled' : ''}`;
@@ -509,6 +525,19 @@
         document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
         cardEl.classList.add('selected');
         document.getElementById('selectedTemplateName').value = name;
+
+        const templateData = templatesMap[name];
+        const directUrlContainer = document.getElementById('template-direct-url-container');
+        const directUrlEl = document.getElementById('template-direct-url');
+
+        if (templateData && templateData.redirectUrl) {
+            directUrlEl.href = templateData.redirectUrl;
+            directUrlEl.innerText = templateData.redirectUrl;
+            directUrlContainer.classList.remove('hidden');
+        } else {
+            directUrlContainer.classList.add('hidden');
+        }
+
         showToast(`Template "${name}" selected`, "success");
     }
 
@@ -539,9 +568,25 @@
     // ---------- Subdomain availability preview ----------
     function updatePreview() {
         const input = document.getElementById('subdomain');
+        const fragInput = document.getElementById('fragment');
+        const finalPreviewDiv = document.getElementById('final-url-preview');
+        const fragPreviewDiv = document.getElementById('fragment-preview');
+
         let val = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '-');
         if (input.value !== val) input.value = val;
         const sub = val.trim();
+        const frag = fragInput.value.trim();
+
+        // Update final visual preview
+        let displayUrl = `https://${sub || '{subdomain}'}.vercel.app`;
+        if (frag) {
+            displayUrl += `/#${frag}`;
+            fragPreviewDiv.innerHTML = `<span class="text-green-400 font-mono">✔ Available</span>`;
+        } else {
+            fragPreviewDiv.innerHTML = '';
+        }
+        finalPreviewDiv.innerText = displayUrl;
+
         const previewDiv = document.getElementById('url-preview');
         const btn = document.getElementById('deployBtn');
         if (!sub) { previewDiv.innerHTML = ''; if(!isLimitReached) btn.disabled = false; return; }
@@ -626,7 +671,12 @@
             clearInterval(deployInterval);
             if (data.success) {
                 localStorage.removeItem('deploy_ad_pass');
-                showSuccessModal(data.url);
+                const frag = document.getElementById('fragment').value.trim();
+                let finalUrl = data.url;
+                if (frag) {
+                    finalUrl += `/#${frag}`;
+                }
+                showSuccessModal(finalUrl);
                 btn.disabled = false;
                 btn.innerText = "⚡ Deploy Site";
                 loadUserInfo(); // refresh usage
@@ -653,15 +703,21 @@
     // ---------- UI Helpers ----------
     function showToast(msg, type = 'success') {
         const toast = document.getElementById('toast');
-        toast.innerText = msg;
+        toast.innerHTML = `<span style="flex:1;">${msg}</span><button onclick="closeToast()" style="background:transparent;border:none;color:white;cursor:pointer;font-size:16px;margin-left:10px;">✕</button>`;
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.justifyContent = 'space-between';
         toast.classList.remove('translate-x-full', 'opacity-0');
         toast.classList.add('translate-x-0', 'opacity-100');
         if (type === 'error') toast.style.borderLeftColor = '#ef4444';
         else toast.style.borderLeftColor = '#2b6ef0';
-        setTimeout(() => {
-            toast.classList.add('translate-x-full', 'opacity-0');
-            toast.classList.remove('translate-x-0', 'opacity-100');
-        }, 3000);
+        // Auto-dismissal removed per requirements
+    }
+
+    function closeToast() {
+        const toast = document.getElementById('toast');
+        toast.classList.add('translate-x-full', 'opacity-0');
+        toast.classList.remove('translate-x-0', 'opacity-100');
     }
 
     function showSuccessModal(url) {
@@ -676,9 +732,14 @@
         const modal = document.getElementById('success-modal');
         modal.style.display = 'none';
         document.getElementById('subdomain').value = '';
+        document.getElementById('fragment').value = '';
+        document.getElementById('final-url-preview').innerText = 'https://{subdomain}.vercel.app/#{fragment}';
         document.getElementById('url-preview').innerHTML = '';
+        document.getElementById('fragment-preview').innerHTML = '';
         document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
         document.getElementById('selectedTemplateName').value = '';
+        const directUrlContainer = document.getElementById('template-direct-url-container');
+        if (directUrlContainer) directUrlContainer.classList.add('hidden');
     }
     function copyDeployedUrl() {
         const url = document.getElementById('deployed-url').innerText;
@@ -710,6 +771,7 @@
     window.unlockDeploy = unlockDeploy;
     window.copyDeployedUrl = copyDeployedUrl;
     window.closeSuccessModal = closeSuccessModal;
+    window.closeToast = closeToast;
 </script>
 
 <style>
@@ -764,17 +826,14 @@ function showToast(message, type = 'success') {
     if(type === 'error') icon = '❌';
     if(type === 'warning') icon = '⚠️';
 
-    toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+    toast.innerHTML = `<span>${icon}</span> <span style="flex:1;">${message}</span> <button onclick="this.parentElement.remove()" style="background:transparent;border:none;color:white;cursor:pointer;font-size:16px;margin-left:10px;">✕</button>`;
     container.appendChild(toast);
 
     setTimeout(() => {
         toast.classList.add('show');
     }, 10);
 
-    setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    // Auto-dismissal removed per requirements
 }
 </script>
 

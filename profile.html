@@ -195,47 +195,6 @@
             </div>
         </div>
 
-        <!-- Filter & Export Bar -->
-        <div class="flex flex-wrap gap-3 justify-between items-center mb-5">
-            <div class="flex gap-3 flex-wrap">
-                <select id="site-filter" class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-4 py-2 text-sm"><option value="all">🌐 All Sites</option></select>
-                <input type="text" id="global-search" placeholder="🔍 Search form data..." class="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-4 py-2 text-sm w-64">
-                <button onclick="filterData()" class="bg-[var(--accent)]/20 hover:bg-[var(--accent)]/40 px-4 py-2 rounded-xl text-sm font-medium transition">Filter</button>
-            </div>
-            <div id="premium-actions" class="flex gap-2" style="display: none;">
-                <button onclick="downloadData()" class="bg-green-600/20 border border-green-500/40 px-3 py-1.5 rounded-lg text-xs font-semibold">📄 JSON</button>
-                <button onclick="downloadCSV()" id="btn-csv" style="display: none;" class="bg-blue-600/20 border border-blue-500/40 px-3 py-1.5 rounded-lg text-xs">📊 CSV</button>
-                <button onclick="copyData()" class="bg-purple-600/20 border border-purple-500/40 px-3 py-1.5 rounded-lg text-xs">📋 Copy</button>
-            </div>
-        </div>
-
-        <!-- Analytics Chart (Premium/Gold) -->
-        <div id="analytics-section" style="display: none;" class="mb-8">
-            <div class="glass-card p-4 border border-[var(--border)] rounded-2xl">
-                <h3 class="font-semibold mb-3">📈 7-Day Capture Trend</h3>
-                <canvas id="captureChart" height="200" style="max-height: 220px;"></canvas>
-            </div>
-        </div>
-
-        <!-- Captured Data Table -->
-        <div class="mb-4 flex justify-between items-center"><h2 class="text-xl font-bold tracking-tight">📥 Captured Data</h2><span class="text-xs text-gray-500" id="data-counter"></span></div>
-        <div class="data-table-container">
-            <table class="desktop-table w-full">
-                <thead><tr><th class="w-36">Timestamp</th><th>Data Content</th><th class="w-24">Action</th></tr></thead>
-                <tbody id="desktop-list"></tbody>
-            </table>
-            <div id="mobile-list" class="block md:hidden p-3 space-y-4"></div>
-            <div id="empty-msg" class="text-center py-12 text-gray-500 hidden">✨ No captures found. Deploy a site to start collecting data.</div>
-        </div>
-
-        <!-- Pagination + Infinite scroll sentinel -->
-        <div id="pagination-controls" class="flex justify-between items-center mt-6 pt-2" style="display: none;">
-            <button id="btn-prev" onclick="changePage(-1)" class="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm">← Previous</button>
-            <span id="page-info" class="text-sm text-gray-400"></span>
-            <button id="btn-next" onclick="changePage(1)" class="px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg text-sm">Next →</button>
-        </div>
-        <div id="scroll-target" class="h-10 w-full"></div>
-
         <!-- Active Sites List (existing) -->
         <div class="glass-card p-6 border border-[var(--border)] rounded-2xl mt-8">
             <h2 class="text-xl font-bold mb-4">🌍 Active Sites</h2>
@@ -310,9 +269,6 @@
                 isLoadingMore = false;
                 totalPages = result.pagination?.totalPages || 1;
                 updateUI(result);
-                renderData(currentData);
-                updatePaginationUI(result.pagination);
-                populateSiteFilter(result.sites || []);
                 renderActiveSites(result.sites || []);
                 updateProfileInfo(result.user);
                 if (result.plan === 'free') triggerAds();
@@ -332,85 +288,8 @@
         document.getElementById('stat-hidden').innerText = data.hidden || 0;
         if (data.expiry) { let days = Math.ceil((new Date(data.expiry) - Date.now())/(1000*3600*24)); let el = document.getElementById('stat-due'); el.innerText = days>0?`${days} Days`:'Expired'; el.style.color = days>5?'var(--success)': days>0?'var(--warning)':'var(--danger)'; }
         else document.getElementById('stat-due').innerText = "Free";
-
-        const premiumActions = document.getElementById('premium-actions');
-        const csvBtn = document.getElementById('btn-csv');
-        const analyticsDiv = document.getElementById('analytics-section');
-        if (plan === 'premium' || plan === 'gold') {
-            premiumActions.style.display = 'flex';
-            if(plan === 'gold') csvBtn.style.display = 'inline-block';
-            else csvBtn.style.display = 'none';
-            analyticsDiv.style.display = 'block';
-            renderChart(data.data || []);
-        } else { premiumActions.style.display = 'none'; analyticsDiv.style.display = 'none'; }
     }
 
-    function renderChart(captures) {
-        const ctx = document.getElementById('captureChart').getContext('2d');
-        const labels = [], dataPoints = [];
-        for(let i=6; i>=0; i--) { let d = new Date(); d.setDate(d.getDate()-i); labels.push(d.toLocaleDateString(undefined,{month:'short',day:'numeric'})); dataPoints.push(0); }
-        captures.forEach(c => { let d = new Date(c.timestamp).toLocaleDateString(); let idx = labels.findIndex(l => l === d.slice(0,6)); if(idx!==-1) dataPoints[idx]++; });
-        if(chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, { type: 'line', data: { labels, datasets: [{ label: 'Captures', data: dataPoints, borderColor: '#0070f3', backgroundColor: 'rgba(0,112,243,0.1)', borderWidth: 2, fill: true, tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } } });
-    }
-
-    function renderData(items) {
-        const desktopTbody = document.getElementById('desktop-list');
-        const mobileDiv = document.getElementById('mobile-list');
-        const emptyMsg = document.getElementById('empty-msg');
-        if (!desktopTbody) return;
-        desktopTbody.innerHTML = ''; mobileDiv.innerHTML = '';
-        if (!items.length) { emptyMsg.classList.remove('hidden'); document.querySelector('.desktop-table')?.classList.add('hidden'); return; }
-        emptyMsg.classList.add('hidden'); document.querySelector('.desktop-table')?.classList.remove('hidden');
-        const plan = document.body.className.includes('gold') ? 'gold' : (document.body.className.includes('premium') ? 'premium' : 'basic');
-        items.forEach(item => {
-            const timestamp = new Date(item.timestamp).toLocaleString();
-            const contentHtml = generateSmartContent(item, plan);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="align-top text-gray-400 text-sm whitespace-nowrap">${timestamp}</td><td>${contentHtml}</td><td><button onclick="deleteItem('${item.key}')" class="btn-delete">Delete</button></td>`;
-            desktopTbody.appendChild(tr);
-            // mobile card
-            const card = document.createElement('div'); card.className = 'bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3 mb-3';
-            card.innerHTML = `<div class="text-xs text-gray-500 mb-2">${timestamp}</div>${contentHtml}<div class="mt-2 text-right"><button onclick="deleteItem('${item.key}')" class="btn-delete text-xs">Delete</button></div>`;
-            mobileDiv.appendChild(card);
-        });
-        document.getElementById('data-counter').innerText = `${items.length} records`;
-    }
-
-    function generateSmartContent(item, plan) {
-        const formData = item.data?.formData || {};
-        let url = item.data?.url || 'Unknown', domain = 'Unknown';
-        try { domain = new URL(url).hostname; } catch(e) {}
-        let fieldsHtml = '';
-        const hiddenFields = (plan === 'gold') ? (JSON.parse(localStorage.getItem('dtech_hidden_fields')||'{}')[domain] || []) : [];
-        for (const [key, val] of Object.entries(formData)) {
-            if (hiddenFields.includes(key)) continue;
-            const safeVal = String(val).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            const hideBtn = (plan === 'gold') ? `<button class="hide-btn" data-domain="${escapeAttr(domain)}" data-key="${escapeAttr(key)}" onclick="toggleFieldVisibility('${escapeAttr(domain)}','${escapeAttr(key)}',true)">✕ hide</button>` : '';
-            fieldsHtml += `<div class="smart-field"><span class="smart-key">${escapeHtml(key)}</span><span class="smart-value">${safeVal}</span><span class="copy-icon" onclick="copyText('${safeVal.replace(/'/g, "\\'")}')">📋</span>${hideBtn}</div>`;
-        }
-        if(!fieldsHtml) fieldsHtml = '<div class="text-gray-500 text-sm italic">No form fields captured</div>';
-        let restoreBtn = (plan === 'gold' && hiddenFields.length) ? `<div class="text-right mt-1"><button class="text-[var(--accent)] text-xs underline" onclick="restoreHiddenFields('${escapeAttr(domain)}')">Restore hidden fields (${hiddenFields.length})</button></div>` : '';
-        return `<div class="text-xs text-[var(--text-sec)] mb-1"><span class="domain-badge">${domain}</span> <span class="opacity-60 ml-2 break-all">${escapeHtml(url)}</span></div><div class="space-y-2">${fieldsHtml}</div>${restoreBtn}`;
-    }
-
-    function updatePaginationUI(pagination) { if(!pagination) return; const prevBtn=document.getElementById('btn-prev'), nextBtn=document.getElementById('btn-next'), infoSpan=document.getElementById('page-info'), controls=document.getElementById('pagination-controls'); if(prevBtn && nextBtn && infoSpan && controls){ controls.style.display='flex'; prevBtn.style.display=pagination.page>1?'inline-block':'none'; nextBtn.style.display=pagination.page<pagination.totalPages?'inline-block':'none'; infoSpan.innerText=`Page ${pagination.page} of ${pagination.totalPages}`; } }
-    function changePage(delta) {
-        if (isLoadingMore) return;
-        let newPage = currentPage + delta;
-        if (newPage > 0 && newPage <= totalPages) {
-            const btnId = delta > 0 ? 'btn-next' : 'btn-prev';
-            const btn = document.getElementById(btnId);
-            const originalText = btn.innerText;
-            if (btn) btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;margin:0;border-width:2px;"></div>';
-
-            fetchCaptures(newPage, delta > 0).finally(() => {
-                if (btn) btn.innerText = originalText;
-            });
-        }
-    }
-
-    function populateSiteFilter(sites){ let select=document.getElementById('site-filter'); if(!select) return; select.innerHTML='<option value="all">🌐 All Sites</option>'; sites.forEach(s=>{ let opt=document.createElement('option'); opt.value=s.subdomain; opt.innerText=s.subdomain; select.appendChild(opt); }); }
     function renderActiveSites(sites) {
     let container = document.getElementById('sites-list');
     if (!container) return;
@@ -436,8 +315,6 @@
 }
     function updateProfileInfo(user){ if(user){ document.getElementById('profile-name').innerText=user.name || user.fullName || 'User'; document.getElementById('profile-email').innerText=user.email || '—'; document.getElementById('profile-role').innerText=(user.role||'USER').toUpperCase(); if(user.avatar) document.getElementById('profile-avatar-ui').innerHTML=`<img src="${user.avatar}" class="w-full h-full rounded-full object-cover">`; } }
     function handleLocked(status){ notify("Account locked: "+status, "error"); document.getElementById('stat-due').innerText='LOCKED'; }
-
-    function filterData(){ let site=document.getElementById('site-filter').value, query=document.getElementById('global-search').value.toLowerCase(); let filtered=currentData.filter(item=>{ let urlMatch=(site==='all')?true:(item.data?.url||'').includes(`//${site}.`); let dataMatch=(query==='')?true:JSON.stringify(item.data?.formData||{}).toLowerCase().includes(query); return urlMatch && dataMatch; }); renderData(filtered); }
 
     function confirmDeleteSite(subdomain) {
         const modalHtml = `
@@ -498,10 +375,6 @@
         }
     }
 
-    async function deleteItem(key){ if(!confirm("Delete this capture?")) return; try{ const token=localStorage.getItem('session_token'); let headers=token?{'Authorization':`Bearer ${token}`}:{}; let res=await fetch(`${WORKER_URL}/api/public/captures?code=${encodeURIComponent(userCode)}&key=${encodeURIComponent(key)}`,{method:'DELETE',headers}); let data=await res.json(); if(data.success){ notify("Deleted","success"); fetchCaptures(currentPage); } else notify("Failed","error"); }catch(e){ notify("Error","error"); } }
-    function copyText(t){ navigator.clipboard.writeText(t).then(()=>notify("Copied!","success")); }
-    function toggleFieldVisibility(domain,key,hide){ try{ let store=JSON.parse(localStorage.getItem('dtech_hidden_fields')||'{}'); let arr=store[domain]||[]; if(hide && !arr.includes(key)) arr.push(key); else if(!hide) arr=arr.filter(k=>k!==key); store[domain]=arr; localStorage.setItem('dtech_hidden_fields',JSON.stringify(store)); fetchCaptures(currentPage); }catch(e){} }
-    function restoreHiddenFields(domain){ try{ let store=JSON.parse(localStorage.getItem('dtech_hidden_fields')||'{}'); if(store[domain]) delete store[domain]; localStorage.setItem('dtech_hidden_fields',JSON.stringify(store)); fetchCaptures(currentPage); }catch(e){} }
     function clearSiteData(){ if(confirm("Clear all hidden field preferences & local cache?")){ localStorage.removeItem('dtech_hidden_fields'); notify("Preferences reset","success"); fetchCaptures(currentPage); } }
 
     function clearResidualData() {
@@ -512,10 +385,6 @@
         }
     }
 
-    function downloadData(){ let filter=document.getElementById('site-filter').value; let exportData={header:"PREASX24 EXPORT",generated:new Date().toISOString(),source:filter,captures:currentData.filter(i=>filter==='all'||(i.data?.url||'').includes(`//${filter}.`)).map(i=>({timestamp:i.timestamp,url:i.data?.url,data:i.data?.formData}))}; let a=document.createElement('a'); a.href="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(exportData,null,2)); a.download=`captures_${filter}.json`; a.click(); notify("JSON exported","success"); }
-    function downloadCSV(){ let filter=document.getElementById('site-filter').value; let items=currentData.filter(i=>filter==='all'||(i.data?.url||'').includes(`//${filter}.`)); if(!items.length){ notify("No data","error"); return; } let headers=new Set(); let rows=items.map(i=>{ let row={timestamp:i.timestamp,url:i.data?.url}; Object.entries(i.data?.formData||{}).forEach(([k,v])=>{ row[k]=v; headers.add(k); }); return row; }); let headerArr=['timestamp','url',...Array.from(headers)]; let csv=[headerArr.join(','),...rows.map(r=>headerArr.map(h=>JSON.stringify(r[h]||'')).join(','))].join('\n'); let blob=new Blob([csv],{type:'text/csv'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`captures_${filter}.csv`; a.click(); notify("CSV exported","success"); }
-    function copyData(){ let filter=document.getElementById('site-filter').value; let exportData={source:filter,data:currentData.filter(i=>filter==='all'||(i.data?.url||'').includes(`//${filter}.`))}; navigator.clipboard.writeText(JSON.stringify(exportData,null,2)).then(()=>notify("Copied to clipboard","success")); }
-
     function isUnlockValid(){ let ts=localStorage.getItem('free_unlock_timestamp'); return ts && (Date.now()-parseInt(ts))<10*60*1000; }
     function triggerAds(){ if(isUnlockValid()){ document.getElementById('ad-overlay').style.display='none'; return; } document.getElementById('ad-overlay').style.display='flex'; let s1=document.createElement('script'); s1.innerHTML=`(function(s){s.dataset.zone='10588048',s.src='https://gizokraijaw.net/vignette.min.js'})(document.body.appendChild(document.createElement('script')))`; document.body.appendChild(s1); }
     function unlockDashboard(){ localStorage.setItem('free_unlock_timestamp',Date.now().toString()); document.getElementById('ad-overlay').style.display='none'; fetchCaptures(currentPage); }
@@ -525,7 +394,6 @@
     function notify(msg,type='success'){ let toast=document.getElementById('toast'); toast.innerText=msg; toast.className=''; toast.classList.add('show',type); setTimeout(()=>toast.classList.remove('show'),3000); }
     function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>]/g,function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
     function escapeAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-    window.toggleFieldVisibility = toggleFieldVisibility; window.restoreHiddenFields = restoreHiddenFields;
 </script>
 
 <style>
