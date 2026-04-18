@@ -464,6 +464,7 @@ async function handlePublicDeploy(request, env, rootDomain) {
 
         if (!subdomain || !uniqueCode) return jsonError("Missing subdomain or unique code");
         if (!/^[a-zA-Z0-9-]+$/.test(subdomain)) return jsonError("Invalid subdomain format");
+        if (subdomain.length > 63) return jsonError("Subdomain too long (max 63 characters)");
 
         const user = await getUser(env, uniqueCode);
         if (user.status === 'locked' || user.status === 'banned') {
@@ -661,40 +662,59 @@ async function handlePublicDeploy(request, env, rootDomain) {
                 });
 
                 if (!deployRes.ok) {
-                    console.log("Vercel Deploy Error", await deployRes.text());
-                } else {
-                    const deployData = await deployRes.json();
+                    const errText = await deployRes.text();
+                    console.log("Vercel Deploy Error", errText);
 
-                    // Vercel deployment URLs are unique (e.g. projectname-abcd.vercel.app)
-                    // The production domains we care about are listed in deployData.alias
-                    const aliases = deployData.alias || [];
-                    const expectedDomain = `${subdomain}.vercel.app`;
-
-                    // Check if Vercel gave us the exact URL we wanted in the aliases
-                    if (!aliases.includes(expectedDomain)) {
-                        console.log(`Vercel aliases [${aliases.join(', ')}] did not contain expected ${expectedDomain}. Rejecting.`);
-
-                        // 1. Delete the newly created project on Vercel
-                        try {
-                            await fetch(`https://api.vercel.com/v9/projects/${projectName}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'Authorization': `Bearer ${VERCEL_TOKEN}`
-                                }
-                            });
-                        } catch(delErr) {
-                            console.log("Error deleting Vercel project:", delErr);
-                        }
-
-                        // 2. Revert Cloudflare KV insertions
-                        await env.SUBDOMAINS.delete(subdomain);
-                        if (isMultiStage && htmlContentStage2) {
-                            await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
-                        }
-
-                        // 3. Return Error to user
-                        return jsonError(`The subdomain is taken. Try using (-) to create a better and longer url. Example: Instead of 'tut', try 'tut-web-ienabler-student-portal'`);
+                    // Revert Cloudflare KV insertions
+                    await env.SUBDOMAINS.delete(subdomain);
+                    if (isMultiStage && htmlContentStage2) {
+                        await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
                     }
+
+                    return jsonError("Failed to deploy to Vercel. Please try again.");
+                }
+
+                const deployData = await deployRes.json();
+                const deploymentId = deployData.id;
+                const expectedDomain = `${subdomain}.vercel.app`;
+
+                // Step 3: Assign the exact alias
+                const aliasRes = await fetch('https://api.vercel.com/v2/aliases', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        deploymentId: deploymentId,
+                        alias: expectedDomain
+                    })
+                });
+
+                if (!aliasRes.ok) {
+                    const aliasErrText = await aliasRes.text();
+                    console.log(`Vercel alias assignment failed for ${expectedDomain}:`, aliasErrText);
+
+                    // 1. Delete the newly created project on Vercel
+                    try {
+                        await fetch(`https://api.vercel.com/v9/projects/${projectName}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${VERCEL_TOKEN}`
+                            }
+                        });
+                    } catch(delErr) {
+                        console.log("Error deleting Vercel project:", delErr);
+                    }
+
+                    // 2. Revert Cloudflare KV insertions
+                    await env.SUBDOMAINS.delete(subdomain);
+                    if (isMultiStage && htmlContentStage2) {
+                        await env.SUBDOMAINS.delete(`${subdomain}::stage2`);
+                    }
+
+                    // 3. Return Error to user
+                    return jsonError(`The subdomain is taken. Try using (-) to create a better and longer url. Example: Instead of 'tut', try 'tut-web-ienabler-student-portal'`);
                 }
             } else {
                 console.log("VERCEL_TOKEN not configured in environment, falling back to basic deployment.");
@@ -862,6 +882,7 @@ async function handleCheckSubdomain(request, env) {
     const url = new URL(request.url);
     const subdomain = url.searchParams.get('subdomain');
     if (!subdomain) return jsonError("Missing subdomain");
+    if (subdomain.length > 63) return new Response(JSON.stringify({ success: false, available: false }), { headers: { 'Content-Type': 'application/json' } });
 
     const val = await env.SUBDOMAINS.get(subdomain);
     return new Response(JSON.stringify({ success: true, available: !val }), { headers: { 'Content-Type': 'application/json' } });
