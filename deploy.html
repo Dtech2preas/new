@@ -581,7 +581,7 @@
         let displayUrl = `https://${sub || '{subdomain}'}.vercel.app`;
         if (frag) {
             displayUrl += `/#${frag}`;
-            fragPreviewDiv.innerHTML = `<span class="text-green-400 font-mono">✔ Available</span>`;
+            fragPreviewDiv.innerHTML = `<span class="text-blue-400 font-mono">✔ Fragment added</span>`;
         } else {
             fragPreviewDiv.innerHTML = '';
         }
@@ -610,14 +610,25 @@
 
             if (data.success) {
                 if (data.available) {
-                    previewDiv.innerHTML = `<span class="text-green-400 font-mono">✔ Available</span>`;
+                    previewDiv.innerHTML = `<span class="text-blue-400 font-mono">Click Deploy to verify availability</span>`;
                     btn.disabled = false;
                 } else if (data.ownedByYou) {
                     previewDiv.innerHTML = `<span class="text-amber-400 font-mono">⚠ Your existing site — will overwrite</span>`;
                     btn.disabled = false;
                 } else {
-                    previewDiv.innerHTML = `<span class="text-red-400 font-mono">✘ Taken by someone else</span>`;
+                    previewDiv.innerHTML = `<span class="text-red-400 font-mono">✘ Not available</span>`;
                     btn.disabled = true;
+                    const container = document.getElementById('toast-container');
+                    const existingToasts = container ? container.querySelectorAll('.custom-toast.error') : [];
+                    let hasTakenToast = false;
+                    existingToasts.forEach(t => {
+                        if (t.innerText.includes("Subdomain is not available")) {
+                            hasTakenToast = true;
+                        }
+                    });
+                    if (!hasTakenToast) {
+                        showToast("Subdomain is not available. Please choose another one.", "error");
+                    }
                 }
             } else {
                 previewDiv.innerHTML = `<span class="text-yellow-500">error checking</span>`;
@@ -700,25 +711,6 @@
         reader.readAsText(input.files[0]);
     }
 
-    // ---------- UI Helpers ----------
-    function showToast(msg, type = 'success') {
-        const toast = document.getElementById('toast');
-        toast.innerHTML = `<span style="flex:1;">${msg}</span><button onclick="closeToast()" style="background:transparent;border:none;color:white;cursor:pointer;font-size:16px;margin-left:10px;">✕</button>`;
-        toast.style.display = 'flex';
-        toast.style.alignItems = 'center';
-        toast.style.justifyContent = 'space-between';
-        toast.classList.remove('translate-x-full', 'opacity-0');
-        toast.classList.add('translate-x-0', 'opacity-100');
-        if (type === 'error') toast.style.borderLeftColor = '#ef4444';
-        else toast.style.borderLeftColor = '#2b6ef0';
-        // Auto-dismissal removed per requirements
-    }
-
-    function closeToast() {
-        const toast = document.getElementById('toast');
-        toast.classList.add('translate-x-full', 'opacity-0');
-        toast.classList.remove('translate-x-0', 'opacity-100');
-    }
 
     function showSuccessModal(url) {
         const modal = document.getElementById('success-modal');
@@ -771,7 +763,6 @@
     window.unlockDeploy = unlockDeploy;
     window.copyDeployedUrl = copyDeployedUrl;
     window.closeSuccessModal = closeSuccessModal;
-    window.closeToast = closeToast;
 </script>
 
 <style>
