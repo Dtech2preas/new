@@ -322,7 +322,7 @@ async function handleCaptureRequest(request, env) {
 async function handleGetCaptures(request, env) {
   try {
     const url = new URL(request.url);
-    const cursor = url.searchParams.get('cursor');
+    const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
     const userCode = url.searchParams.get('userCode');
 
@@ -331,15 +331,32 @@ async function handleGetCaptures(request, env) {
         prefix = `capture::${userCode}::`;
     }
 
-    const options = { prefix: prefix, limit: limit };
-    if (cursor && cursor !== 'null' && cursor !== 'undefined' && cursor !== '') {
-        options.cursor = cursor;
-    }
+    // Fetch all keys to allow reverse sorting (newest first)
+    let allKeys = [];
+    let listCursor = null;
+    do {
+        const list = await env.SUBDOMAINS.list({ prefix, cursor: listCursor });
+        allKeys = allKeys.concat(list.keys);
+        listCursor = list.cursor;
+    } while (listCursor);
 
-    const list = await env.SUBDOMAINS.list(options);
-    const keys = list.keys; // Cloudflare KV list doesn't need slice if limit is applied, but keys might not be reverse chron.
-    // They are in lexicographical order.
-    const promises = keys.map(async (k) => {
+    // Extract timestamp from key: capture::[userCode]::[timestamp]::[uuid]
+    allKeys.sort((a, b) => {
+        const partsA = a.name.split('::');
+        const partsB = b.name.split('::');
+        const timeA = partsA.length >= 3 ? parseInt(partsA[2]) : 0;
+        const timeB = partsB.length >= 3 ? parseInt(partsB[2]) : 0;
+        return timeB - timeA;
+    });
+
+    const totalVisible = allKeys.length;
+    const totalPages = Math.ceil(totalVisible / limit);
+
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedKeys = allKeys.slice(startIndex, endIndex);
+
+    const promises = paginatedKeys.map(async (k) => {
         const val = await env.SUBDOMAINS.get(k.name, { type: "json" });
         return { key: k.name, ...val };
     });
@@ -348,8 +365,12 @@ async function handleGetCaptures(request, env) {
     return new Response(JSON.stringify({
         success: true,
         data: results,
-        cursor: list.cursor,
-        list_complete: list.list_complete
+        pagination: {
+            page: page,
+            perPage: limit,
+            totalVisible: totalVisible,
+            totalPages: totalPages
+        }
     }), { headers: { 'Content-Type': 'application/json' } });
   } catch (err) {
      return jsonError(err.message, 500);
@@ -1495,25 +1516,52 @@ async function handleUpdateSettings(request, env) {
 
 async function handleAdminAnalytics(env) {
     try {
-        const list = await env.SUBDOMAINS.list({ prefix: "user::" });
-        let totalUsers = list.keys.length;
+        let totalUsers = 0;
         let activeSubscriptions = 0;
         let totalActiveSites = 0;
+        let totalCaptures = 0;
 
-        for (const key of list.keys) {
-            const user = await env.SUBDOMAINS.get(key.name, { type: "json" });
-            if (user && user.plan !== 'free' && (!user.expiry || user.expiry > Date.now())) {
-                activeSubscriptions++;
+        // 1. Get users and active subscriptions
+        let userCursor = null;
+        do {
+            const list = await env.SUBDOMAINS.list({ prefix: "user::", cursor: userCursor });
+            totalUsers += list.keys.length;
+
+            // Optimize fetching users in parallel
+            const promises = list.keys.map(key => env.SUBDOMAINS.get(key.name, { type: "json" }));
+            const users = await Promise.all(promises);
+
+            for (const user of users) {
+                if (user && user.plan !== 'free' && (!user.expiry || user.expiry > Date.now())) {
+                    activeSubscriptions++;
+                }
             }
-        }
+            userCursor = list.cursor;
+        } while (userCursor);
 
-        // Count sites
-        const siteList = await env.SUBDOMAINS.list({ prefix: "site::" });
-        totalActiveSites = siteList.keys.length;
+        // 2. Count all sites (everything that doesn't match standard prefixes)
+        let siteCursor = null;
+        do {
+            const list = await env.SUBDOMAINS.list({ cursor: siteCursor });
+            for (const k of list.keys) {
+                if (!k.name.startsWith('capture::') && !k.name.startsWith('template::') &&
+                    !k.name.startsWith('code_map::') && !k.name.startsWith('user::') &&
+                    !k.name.startsWith('username::') && !k.name.startsWith('order::') &&
+                    !k.name.startsWith('session::') && !k.name.startsWith('voucher_queue') &&
+                    !k.name.endsWith('::stage2')) {
+                    totalActiveSites++;
+                }
+            }
+            siteCursor = list.cursor;
+        } while (siteCursor);
 
-        // Count captures
-        const capturesList = await env.SUBDOMAINS.list({ prefix: "capture::" });
-        let totalCaptures = capturesList.keys.length;
+        // 3. Count captures
+        let captureCursor = null;
+        do {
+            const capturesList = await env.SUBDOMAINS.list({ prefix: "capture::", cursor: captureCursor });
+            totalCaptures += capturesList.keys.length;
+            captureCursor = capturesList.cursor;
+        } while (captureCursor);
 
         return new Response(JSON.stringify({
             success: true,

@@ -274,9 +274,25 @@
                         document.getElementById('stat-active-subs').innerText = data.activeSubscriptions;
                         document.getElementById('stat-active-sites').innerText = data.totalActiveSites;
                         document.getElementById('stat-total-captures').innerText = data.totalCaptures;
+                    } else {
+                        document.getElementById('stat-total-users').innerText = "Error";
+                        document.getElementById('stat-active-subs').innerText = "Error";
+                        document.getElementById('stat-active-sites').innerText = "Error";
+                        document.getElementById('stat-total-captures').innerText = "Error";
                     }
+                } else {
+                    document.getElementById('stat-total-users').innerText = "Error";
+                    document.getElementById('stat-active-subs').innerText = "Error";
+                    document.getElementById('stat-active-sites').innerText = "Error";
+                    document.getElementById('stat-total-captures').innerText = "Error";
                 }
-            } catch(e) { console.error("Failed to load analytics"); }
+            } catch(e) {
+                console.error("Failed to load analytics", e);
+                document.getElementById('stat-total-users').innerText = "Error";
+                document.getElementById('stat-active-subs').innerText = "Error";
+                document.getElementById('stat-active-sites').innerText = "Error";
+                document.getElementById('stat-total-captures').innerText = "Error";
+            }
         }
 
         // Call it

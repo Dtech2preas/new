@@ -78,7 +78,7 @@
                 <select id="user-filter" class="input-field px-4 py-2 rounded-md text-sm w-full md:w-64" onchange="filterByUser()">
                     <option value="">All Users</option>
                 </select>
-                <button onclick="loadData(null, true)" class="bg-border hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap">
+                <button onclick="loadData(true)" class="bg-border hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap">
                     Refresh Logs
                 </button>
             </div>
@@ -116,8 +116,6 @@
         const WORKER_URL = 'https://calm-bread-1d99.testdx24.workers.dev';
 
         let currentPage = 1;
-        let cursorHistory = [];
-        let currentCursor = null;
         let hasMore = false;
         const itemsPerPage = 20;
         let currentUserFilter = '';
@@ -142,45 +140,32 @@
         function filterByUser() {
             currentUserFilter = document.getElementById('user-filter').value;
             currentPage = 1;
-            cursorHistory = [];
-            currentCursor = null;
-            loadData(null, true);
+            loadData(true);
         }
 
         document.getElementById('prev-page').addEventListener('click', () => {
             if (currentPage > 1) {
                 currentPage--;
-                // Pop the current cursor we are at
-                cursorHistory.pop();
-                // Get the cursor for the previous page, or null if going to page 1
-                currentCursor = cursorHistory.length > 0 ? cursorHistory[cursorHistory.length - 1] : null;
-                // Pop it again so loadData can push it back
-                if (cursorHistory.length > 0) cursorHistory.pop();
-                loadData(currentCursor);
+                loadData();
             }
         });
 
         document.getElementById('next-page').addEventListener('click', () => {
             if (hasMore) {
                 currentPage++;
-                loadData(currentCursor);
+                loadData();
             }
         });
 
-        async function loadData(cursor = null, reset = false) {
+        async function loadData(reset = false) {
             if (reset) {
-                cursorHistory = [];
-                currentCursor = null;
                 currentPage = 1;
             }
             try {
                 document.getElementById('loading').style.display = 'block';
                 document.getElementById('data-table').style.display = 'none';
 
-                let url = `${WORKER_URL}/api/captures?limit=${itemsPerPage}`;
-                if (cursor) {
-                    url += `&cursor=${encodeURIComponent(cursor)}`;
-                }
+                let url = `${WORKER_URL}/api/captures?page=${currentPage}&limit=${itemsPerPage}`;
                 if (currentUserFilter) {
                     url += `&userCode=${encodeURIComponent(currentUserFilter)}`;
                 }
@@ -194,16 +179,9 @@
                 const result = await response.json();
 
                 if (result.success) {
-                    // Save the current cursor we used to get to this page
-                    if (cursorHistory.length === 0 || cursorHistory[cursorHistory.length - 1] !== cursor) {
-                        cursorHistory.push(cursor);
-                    }
+                    hasMore = currentPage < result.pagination.totalPages;
 
-                    // Update state for next page
-                    currentCursor = result.cursor;
-                    hasMore = !result.list_complete && result.cursor;
-
-                    document.getElementById('page-info').innerText = `Page ${currentPage}`;
+                    document.getElementById('page-info').innerText = `Page ${currentPage} of ${result.pagination.totalPages || 1}`;
                     document.getElementById('prev-page').disabled = currentPage === 1;
                     document.getElementById('next-page').disabled = !hasMore;
 
@@ -330,7 +308,7 @@
         }
 
         // Load on start
-        loadData(null, true);
+        loadData(true);
 
 
     </script>
