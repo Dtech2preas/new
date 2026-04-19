@@ -4,7 +4,7 @@
     <meta name="monetag" content="11fda623f808704a24728b96c85545b8">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D-TECH Hub | Plans</title>
+    <title>D-TECH Hub | How to Use</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -264,12 +264,11 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     Profile
                 </a>
-
-                <a href="plans.html" class="flex items-center gap-3 px-4 py-3 bg-white/5 text-white rounded-xl font-medium transition-colors border border-[var(--border)]">
+                <a href="plans.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-colors">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                     Plans
                 </a>
-                <a href="help.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl font-medium transition-colors">
+                <a href="help.html" class="flex items-center gap-3 px-4 py-3 bg-white/5 text-white rounded-xl font-medium transition-colors border border-[var(--border)]">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     How to Use
                 </a>
@@ -291,192 +290,85 @@
         </aside>
 
         <!-- Main Content -->
+
+        <!-- Main Content -->
         <main class="main-content">
             <!-- Mobile Header -->
             <header class="mobile-header flex justify-between items-center py-4 mb-6 border-b border-[var(--border)]">
                 <div class="logo text-xl font-extrabold tracking-tight">D-TECH <span class="text-[var(--accent)]">HUB</span></div>
                 <div class="flex items-center gap-3">
                     <span id="plan-badge-mobile" class="px-3 py-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-xs font-bold uppercase">FREE</span>
-                    <button href="profile.html" class="text-gray-400 hover:text-white">
+                    <a href="profile.html" class="text-gray-400 hover:text-white">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    </button>
+                    </a>
                 </div>
             </header>
 
-
-
-        </div>
-
-                <div class="profile-grid">
-                    <div class="stat-box">
-                        <span class="label">Status</span>
-                        <span class="value" id="profile-status" style="color:var(--success);">Active</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="label">Expires</span>
-                        <span class="value" id="profile-expiry">Never</span>
-                    </div>
-                    <div class="stat-box">
-                        <span class="label">Sites</span>
-                        <span class="value" id="profile-sites">0 / 1</span>
-                    </div>
-                </div>
-
-
-                <div class="profile-section">
-                    <h4 class="text-[var(--accent)] font-semibold mb-2">Data Retention Policy</h4>
-                    <p class="text-xs text-gray-500 mb-3">Auto-delete old captured data to save space and manage privacy.</p>
-                    <div class="flex gap-2">
-                        <select id="retention-select" class="bg-[var(--bg-card)] border border-[var(--border)] text-white text-sm rounded-lg p-2 focus:border-[var(--accent)] outline-none flex-1">
-                            <option value="7">7 Days (Default Free)</option>
-                            <option value="30">30 Days</option>
-                            <option value="90">90 Days (Gold)</option>
-                        </select>
-                        <button onclick="saveRetentionPolicy()" class="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">Save</button>
-                    </div>
-                </div>
-
-                <div class="profile-section">
-                    <h4 class="font-semibold mb-3">Security Activity</h4>
-
-                    <div class="activity-log-wrapper">
-                        <table class="activity-table">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Action</th>
-                                    <th>IP Address</th>
-                                </tr>
-                            </thead>
-                            <tbody id="activity-list">
-                                <tr><td colspan="3" style="text-align:center; color:#666;">No activity recorded</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="profile-section" id="gold-settings" style="display:none;">
-                    <h4 style="color:var(--accent);">Gold Features</h4>
-                    <p style="font-size:0.8rem; color:#888;">Manage your dashboard preferences.</p>
-                    <button onclick="clearHiddenFields()" class="btn-action">Reset Hidden Fields</button>
-                    <button onclick="exportToGoogleSheets()" class="btn-action" style="background-color: #0f9d58; color: white;">Export to Google Sheets</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="locked-msg" class="hidden mb-6 p-4 rounded-xl border border-red-500/30 bg-red-500/10 text-red-500 backdrop-blur-md animate-[fadeIn_0.5s_ease]">
-            <h3>⛔ ACCOUNT LOCKED</h3>
-            <p>Your previous payment was declined. Access is restricted. Please submit a valid voucher.</p>
-        </div>
-
-        <div id="pending-msg" class="hidden mb-6 p-4 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-yellow-500 backdrop-blur-md animate-[fadeIn_0.5s_ease]">
-            <h3>⏳ GOLD UPGRADE PENDING</h3>
-            <p>Your Gold upgrade is currently being verified by an admin. In the meantime, you have full access to <strong>PREMIUM</strong> features!</p>
-        </div>
-
-        <div id="pending-premium-msg" class="hidden mb-6 p-4 rounded-xl border border-[var(--accent)]/30 bg-[var(--accent)]/10 text-[var(--accent)] backdrop-blur-md animate-[fadeIn_0.5s_ease]">
-            <h3>⏳ PREMIUM UPGRADE PENDING</h3>
-            <p>Your Premium upgrade is currently being verified. In the meantime, you have full access to <strong>BASIC</strong> features!</p>
-        </div>
-
-
-        <!-- Upgrade Section -->
-        <div class="glass-card p-6 md:p-8 rounded-2xl shadow-xl mt-12 mb-8 border border-[var(--border)] relative overflow-hidden">
-            <div class="absolute -top-24 -right-24 w-48 h-48 bg-[var(--accent)] rounded-full blur-[100px] opacity-20"></div>
-
-            <div class="flex items-center justify-between mb-8 relative z-10">
-                <h3 class="text-2xl font-bold m-0 flex items-center gap-2">
-                    <svg class="w-6 h-6 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Upgrade Plan
-                </h3>
+            <div class="mb-8">
+                <h2 class="text-3xl font-extrabold mb-2">How to Use D-TECH</h2>
+                <p class="text-gray-400">Watch these tutorials to get the most out of your account.</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 relative z-10">
-                <!-- Free Plan -->
-                <div class="p-6 bg-[var(--bg-main)] rounded-xl border border-[var(--border)] hover:border-[var(--accent)] transition-all duration-300 hover:-translate-y-1">
-                    <h4 class="text-lg font-bold mb-1 text-[var(--accent)]">Free Plan</h4>
-                    <p class="text-sm text-gray-500 mb-4">Current Default</p>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>1 Deployment Max</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>5 Visible Captures</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Standard SSL</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Includes Ads</li>
-                    </ul>
-                </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                <!-- Basic Plan -->
-                <div class="p-6 bg-[var(--bg-main)] rounded-xl border border-[var(--border)] hover:border-[#2f81f7] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-br from-[#2f81f7]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <h4 class="text-lg font-bold mb-1 text-[#2f81f7]">Basic Plan</h4>
-                    <p class="text-sm font-semibold text-white mb-4">10R <span class="text-xs text-gray-500 font-normal">/ 30 Days</span></p>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>3 Deployments Max</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>15 Visible Captures</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Extended Retention</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#2f81f7]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>No Ads</li>
-                    </ul>
-                </div>
-
-                <!-- Premium Plan -->
-                <div class="p-6 bg-[var(--bg-main)] rounded-xl border border-[var(--border)] hover:border-[#9b59b6] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden">
-                    <div class="absolute inset-0 bg-gradient-to-br from-[#9b59b6]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <h4 class="text-lg font-bold mb-1 text-[#9b59b6]">Premium Plan</h4>
-                    <p class="text-sm font-semibold text-white mb-4">20R <span class="text-xs text-gray-500 font-normal">/ 30 Days</span></p>
-                    <ul class="space-y-2 text-sm text-gray-400">
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#9b59b6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>10 Deployments Max</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#9b59b6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>250 Visible Captures</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#9b59b6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Priority Routing</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#9b59b6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Support Included</li>
-                    </ul>
-                </div>
-
-                <!-- Gold Plan -->
-                <div class="p-6 rounded-xl border border-[#d4af37]/40 bg-gradient-to-br from-[#d4af37]/10 to-black hover:border-[#ffd700] hover:shadow-[0_0_20px_rgba(212,175,55,0.2)] transition-all duration-300 hover:-translate-y-1 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 bg-gradient-to-l from-[#d4af37] to-[#ffd700] text-black text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
-                    <h4 class="text-lg font-bold mb-1 text-transparent bg-clip-text bg-gradient-to-r from-[#ffd700] to-[#d4af37]">GOLD MEMBERSHIP</h4>
-                    <p class="text-sm font-semibold text-white mb-4">30R <span class="text-xs text-gray-300 font-normal">/ 30 Days</span></p>
-                    <ul class="space-y-2 text-sm text-gray-200">
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#ffd700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Unlimited Deployments*</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#ffd700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Unlimited Captures</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#ffd700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Exclusive Templates</li>
-                        <li class="flex items-center gap-2"><svg class="w-4 h-4 text-[#ffd700]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Anti-Bot Protection</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="border-t border-[var(--border)] pt-8 mt-4 relative z-10">
-                <div class="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                <!-- Card 1 -->
+                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between group transition-all hover:border-[var(--accent)]">
                     <div>
-                        <h4 class="font-semibold text-white mb-1">Select your upgrade</h4>
-                        <p class="text-sm text-gray-400">Advance payments stack your expiry date.</p>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                        <div class="relative w-full sm:w-64">
-                            <select id="target-plan" class="w-full appearance-none bg-[var(--bg-main)] border border-[var(--border)] text-white text-sm rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:border-[var(--accent)] transition-colors cursor-pointer font-medium">
-                                <option value="basic">Basic (10R / 30 Days)</option>
-                                <option value="premium">Premium (20R / 30 Days)</option>
-                                <option value="gold" selected>GOLD (30R / 30 Days)</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
+                        <div class="w-12 h-12 bg-[var(--accent)]/10 text-[var(--accent)] rounded-xl flex items-center justify-center mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                         </div>
-                        <button onclick="submitPayment()" id="btn-pay" class="w-full sm:w-auto bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-[var(--accent)]/20 transition-all active:scale-95 whitespace-nowrap">
-                            Pay / Extend
-                        </button>
+                        <h3 class="text-xl font-bold mb-2">How to delete URLs</h3>
+                        <p class="text-sm text-gray-400 mb-6">Learn how to easily manage and delete deployed URLs from your account.</p>
                     </div>
-                </div>
-                <div class="mt-4 flex justify-end">
-                    <a href="dtech.html" class="inline-flex items-center gap-2 text-sm text-[var(--accent)] hover:text-white transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        How to get a D-Tech voucher?
+                    <a href="https://drive.google.com/file/d/1WPoAcx4uQvx_oPLJMje4Qf3Bi6GBXF_1/view?usp=drivesdk" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-[var(--accent)] group-hover:text-[var(--accent-hover)] transition-colors">
+                        Watch Tutorial <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                     </a>
                 </div>
-                <p id="pay-msg" class="text-sm text-[var(--danger)] mt-3 text-right hidden"></p>
+
+                <!-- Card 2 -->
+                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between group transition-all hover:border-[var(--accent)]">
+                    <div>
+                        <div class="w-12 h-12 bg-[var(--accent)]/10 text-[var(--accent)] rounded-xl flex items-center justify-center mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">How to get D-Tech vouchers & extend your plan</h3>
+                        <p class="text-sm text-gray-400 mb-6">A step-by-step guide on acquiring vouchers to upgrade or extend your current D-Tech plan.</p>
+                    </div>
+                    <a href="https://drive.google.com/file/d/1UJerp5TGMFxsyxVt8HpBbCWAfPn5gYfz/view?usp=drivesdk" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-[var(--accent)] group-hover:text-[var(--accent-hover)] transition-colors">
+                        Watch Tutorial <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between group transition-all hover:border-[var(--accent)]">
+                    <div>
+                        <div class="w-12 h-12 bg-[var(--accent)]/10 text-[var(--accent)] rounded-xl flex items-center justify-center mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Deploying, subdomains & fragments</h3>
+                        <p class="text-sm text-gray-400 mb-6">Learn how to deploy a website, get a subdomain, use fragments, and see your captured data.</p>
+                    </div>
+                    <a href="https://drive.google.com/file/d/1CsflKTi_8PoaLkXHKPWcLHYaPF350owd/view?usp=drivesdk" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-[var(--accent)] group-hover:text-[var(--accent-hover)] transition-colors">
+                        Watch Tutorial <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between group transition-all hover:border-[var(--accent)]">
+                    <div>
+                        <div class="w-12 h-12 bg-[var(--accent)]/10 text-[var(--accent)] rounded-xl flex items-center justify-center mb-4">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Organise & export captured data</h3>
+                        <p class="text-sm text-gray-400 mb-6">Discover the best ways to filter, organize, and export your captured data securely.</p>
+                    </div>
+                    <a href="https://drive.google.com/file/d/1yi5kC-oNrFbpphMRYC9R2KrZSjfFVLe_/view?usp=drivesdk" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-[var(--accent)] group-hover:text-[var(--accent-hover)] transition-colors">
+                        Watch Tutorial <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </div>
+
             </div>
-        </div>
-            </main>
+    </main>
     </div>
 
     <div id="toast">Message</div>
@@ -584,45 +476,7 @@
             }
         }
 
-        async function submitPayment() {
-            const btn = document.getElementById('btn-pay');
-            const msg = document.getElementById('pay-msg');
-            const plan = document.getElementById('target-plan').value;
 
-            let amount = 30;
-            if (plan === 'basic') amount = 10;
-            if (plan === 'premium') amount = 20;
-
-            btn.disabled = true;
-            btn.innerText = "Processing...";
-            if(msg) msg.innerText = "";
-
-            try {
-                const res = await fetch(`${WORKER_URL}/api/pay/initiate`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        uniqueCode: userCode,
-                        plan: plan,
-                        amount: amount,
-                        returnUrl: window.location.href.split('?')[0]
-                    })
-                });
-                const data = await res.json();
-
-                if(data.success && data.redirectUrl) {
-                    window.location.href = data.redirectUrl;
-                } else {
-                    notify(data.error || "Failed to initiate payment", "error");
-                    btn.disabled = false;
-                    btn.innerText = "Pay / Extend";
-                }
-            } catch(e) {
-                notify("Network Error", "error");
-                btn.disabled = false;
-                btn.innerText = "Pay / Extend";
-            }
-        }
 
         function logout() {
             localStorage.removeItem('user_code');
