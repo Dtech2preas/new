@@ -165,6 +165,32 @@
     </div>
 
 
+    <!-- Unauthorized Modal -->
+    <div id="unauthorized-modal" class="fixed inset-0 z-[10000] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div class="bg-[#111] border border-red-500/30 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl shadow-red-500/10">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 flex-shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold text-white">Unauthorized</h3>
+                    <p class="text-sm text-gray-400">Session error.</p>
+                </div>
+            </div>
+            <p class="text-gray-300 text-sm mb-6">
+                Authentication failed. Clearing residual data might fix this.
+            </p>
+            <div class="flex flex-col gap-3">
+                <button onclick="clearResidualData()" class="w-full px-4 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white transition-colors text-sm font-bold shadow-lg shadow-red-500/20">
+                    Clear Residual Data
+                </button>
+                <button onclick="document.getElementById('unauthorized-modal').classList.add('hidden')" class="w-full px-4 py-2 rounded-xl border border-gray-800 text-gray-400 hover:bg-white/5 transition-colors text-xs">
+                    Ignore
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SET USERNAME MODAL -->
     <div class="modal-overlay hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000] flex justify-center items-center" id="username-modal">
         <div class="glass-card p-8 rounded-2xl w-11/12 max-w-sm shadow-2xl border border-[var(--border)] relative">
@@ -389,6 +415,9 @@
         // Helpers
 
         function showToast(message, type = 'success') {
+            if (message && message.toLowerCase().includes('unauthorized')) {
+                showUnauthorizedModal();
+            }
             const toast = document.getElementById('toast');
             toast.innerText = message;
             toast.className = ''; // Reset classes
@@ -397,6 +426,17 @@
             setTimeout(() => {
                 toast.classList.remove('show');
             }, 3000);
+        }
+
+        function clearResidualData() {
+            localStorage.clear();
+            sessionStorage.clear();
+            location.reload();
+        }
+
+        function showUnauthorizedModal() {
+            const modal = document.getElementById('unauthorized-modal');
+            if (modal) modal.classList.remove('hidden');
         }
 
         function generateUUID() {
@@ -409,16 +449,16 @@
 
 
         function saveSession(code, username, remember, sessionToken) {
-            // Clear any old plan cache for new logins
-            localStorage.removeItem('cached_plan');
+            // Force clear all residual data before starting new session
+            localStorage.clear();
+            sessionStorage.clear();
+
             localStorage.setItem('user_code', code);
             if(sessionToken) localStorage.setItem('session_token', sessionToken);
             if(username) localStorage.setItem('user_name', username);
 
             if (remember) {
                 localStorage.setItem('remember_me', 'true');
-            } else {
-                localStorage.removeItem('remember_me');
             }
         }
 
@@ -434,6 +474,9 @@
         }
 
         function showError(el, msg) {
+            if (msg && msg.toLowerCase().includes('unauthorized')) {
+                showUnauthorizedModal();
+            }
             el.innerText = msg;
             el.style.display = 'block';
         }
@@ -492,6 +535,9 @@
 <div id="toast-container"></div>
 <script>
 function showToast(message, type = 'success') {
+    if (message && message.toLowerCase().includes('unauthorized')) {
+        showUnauthorizedModal();
+    }
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = `custom-toast ${type}`;
