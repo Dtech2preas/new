@@ -448,6 +448,7 @@
 
     // init CodeMirror
     document.addEventListener('DOMContentLoaded', () => {
+            window.scrollTo(0, 0);
         const textarea = document.getElementById('customHtml');
         editor = CodeMirror.fromTextArea(textarea, {
             mode: "htmlmixed",
