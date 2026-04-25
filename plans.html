@@ -297,9 +297,9 @@
                 <div class="logo text-xl font-extrabold tracking-tight">D-TECH <span class="text-[var(--accent)]">HUB</span></div>
                 <div class="flex items-center gap-3">
                     <span id="plan-badge-mobile" class="px-3 py-1 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-xs font-bold uppercase">FREE</span>
-                    <button href="profile.html" class="text-gray-400 hover:text-white">
+                    <a href="profile.html" class="text-gray-400 hover:text-white">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    </button>
+                    </a>
                 </div>
             </header>
 
@@ -517,6 +517,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            window.scrollTo(0, 0);
             // Apply cached plan immediately
             const cachedPlan = localStorage.getItem('cached_plan') || 'free';
             document.body.className = `plan-${cachedPlan}`;

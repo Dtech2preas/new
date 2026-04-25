@@ -409,6 +409,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
+            window.scrollTo(0, 0);
             // Apply cached plan immediately
             const cachedPlan = localStorage.getItem('cached_plan') || 'free';
             document.body.className = `plan-${cachedPlan}`;
