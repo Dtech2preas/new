@@ -1,0 +1,96 @@
+# D-TECH Cloud: Full System Analysis Document
+
+## 1. System Overview
+
+D-TECH Cloud is a centralized platform designed to allow users to securely deploy hosted websites (or templates) and capture form submissions from those sites seamlessly. The architecture separates the user-facing dashboards and management screens (static HTML interfaces) from the backend API services (Cloudflare Workers) and the actual live site hosting (Vercel).
+
+**Primary Goals & Functions:**
+- **Secure Deployment:** Users can deploy custom HTML or pre-built templates to a dynamically generated subdomain hosted on Vercel.
+- **Data Capture:** A hidden injection script is bundled into deployed sites. This script intercepts user inputs and form submissions, preventing normal submission paths to securely transmit the data to the backend Cloudflare Worker.
+- **Management & Analytics:** Both general users and admins have dedicated dashboards to view captured data, manage deployed sites, upgrade their subscription plans via secure payments, and manage user lifecycles.
+- **Monetization & Plans:** The platform includes different subscription tiers (Free, Basic, Premium, Gold) which gate the number of deployed sites, template accessibility, data retention periods, and visibility of captured data.
+
+## 2. Architecture & Data Flow
+
+The system is organized into a modular three-tier architecture:
+
+1. **Frontend UI (Static HTML):**
+   - The primary dashboards (`dashboard.html`, `profile.html`, `deploy.html`, etc.) are plain HTML files styled with Tailwind CSS via CDN.
+   - Client-side interactions fetch data from the backend using standard REST API calls (`fetch`), storing session tokens securely in `localStorage` and `sessionStorage`.
+
+2. **Backend API (Cloudflare Worker - `worker.js`):**
+   - Operates strictly as a serverless REST API processing routing, data validation, KV storage queries, and bridging the Vercel API.
+   - Handles all persistent states and records utilizing Cloudflare KV (Key-Value) store. It uses a prefix-based key system to manage users, site deployments, captures, templates, and active sessions.
+
+3. **External Integrations:**
+   - **Vercel API:** Deployed user HTML content is forwarded to Vercel via its REST API (using a Vercel Authorization Token) to spin up isolated `.vercel.app` disposable subdomains without exposing the Cloudflare Worker directly to end-user traffic.
+   - **Payment Gateway:** Plan upgrades hook into the D-TECH Secure Payment Gateway, validating tokens server-to-server after frontend redirects.
+
+**Data Capture Flow:**
+1. User deploys a site. The worker bundles `injection.js` directly into the `</body>` tag of the user's HTML.
+2. A visitor loads the Vercel-hosted subdomain. The `injection.js` script actively binds to forms and captures idle typing and form submissions.
+3. Upon submission (or clicking submit-like buttons), the script prevents the default form action and uses `fetch` to POST the data to the Cloudflare Worker's `/api/capture` endpoint.
+4. For multi-stage captures (Two-Page Redirect), Stage 1 data is temporarily stored in `sessionStorage` and redirected to `/verify/` where Stage 2 gathers the rest of the inputs, combining both payloads before transmission.
+
+## 3. Frontend Files Breakdown (High-Level Summary)
+
+- **`index.html`**: The main landing page. Provides tabs for new users to register and generate a unique key, existing users to sign in with a username/password, or legacy users to sign in using their unique code.
+- **`dashboard.html`**: The primary user hub displaying an overview of recent captures, subscription status, system analytics, and shortcuts to deployment tools.
+- **`profile.html`**: Allows users to manage their account settings, view active deployments (sites), delete sites, and upgrade their account.
+- **`deploy.html`**: The core deployment interface. Users specify a subdomain, select a pre-built template or provide custom HTML (via an embedded CodeMirror editor), and configure the post-capture redirect URL.
+- **`captures.html`**: Dedicated to displaying paginated tables of data captured from the user's deployed sites.
+- **`plans.html`**: Displays the available subscription tiers (Free, Basic, Premium, Gold) and outlines the limits for each. Initiates the payment/upgrade process.
+- **`dtech.html`**: A secondary utility page typically used to process voucher claims or alternative payment validations.
+- **`help.html`**: An instructional page with static content explaining how to use the platform's features.
+- **`admin-login.html` & `login.html`**: Dedicated authentication portals for system administrators.
+- **`admin.html`**: The master control panel for administrators. It features sections to manage users (suspend, ban, change plans), manage templates, view system-wide analytics, and handle global site deployments.
+
+## 4. Backend Logic & API Endpoints (`worker.js`)
+
+The Cloudflare Worker routes all requests dynamically and handles CORS headers correctly to ensure the web UI can communicate seamlessly.
+
+**Data Storage (Cloudflare KV Keys):**
+- `user::{code}`: User account data (plan, status, expiry).
+- `username::{name}`: Maps a username to a unique code.
+- `session::{token}`: Active session token mapped to a user code.
+- `{subdomain}`: Metadata for a deployed site (owner, template, HTML content).
+- `{subdomain}::stage2`: Optional Stage 2 HTML content for multi-stage templates.
+- `capture::{userCode}::{timestamp}::{uuid}`: Raw captured form data payloads.
+- `template::{name}`: Saved template data.
+- `code_map::{userCode}`: An array of deployed sites owned by the user.
+
+**Key API Endpoints:**
+
+**Authentication & User Management:**
+- `POST /api/auth/register`: Creates a new user, reserving a username and assigning a unique UUID-based code. Defaults to the 'Free' plan.
+- `POST /api/auth/login`: Validates username/password or legacy codes. Issues a 7-day `sessionToken` stored in KV.
+- `POST /api/auth/set-username`: Allows legacy users to define a username.
+- `POST /api/auth/start-trial`: Grants a one-time 3-day Premium trial upgrade.
+- `POST /api/auth/settings`: Updates user-specific settings like data retention periods.
+
+**Public Deployments & Sites:**
+- `GET /api/public/check-subdomain`: Validates if a requested subdomain is available or already owned by the current user.
+- `POST /api/public/deploy`: The core deployment engine. Validates limits, injects tracking scripts, patches Vercel project settings, uploads files to Vercel, waits 10 seconds, and applies the `.vercel.app` alias.
+- `DELETE /api/public/sites`: Deletes a deployed site from KV, removes its Vercel footprint, and deletes all associated capture data.
+
+**Data Capture:**
+- `POST /api/capture`: Receives raw form data from injected scripts. Applies plan-specific TTLs (Time-To-Live) before saving the payload to KV.
+- `GET /api/public/captures`: Returns paginated capture data for the authenticated user, enforcing visibility limits based on their subscription tier.
+- `DELETE /api/public/captures`: Allows a user to delete a specific capture record.
+
+**Templates:**
+- `GET /api/public/templates`: Retrieves a list of available templates, filtering access based on plan tiers (e.g., Gold exclusive).
+- `GET /api/public/template-preview`: Renders the HTML of a template directly in the browser, injecting an overlay script to strictly disable form submissions and interactions for safe viewing.
+
+**Payments & Upgrades:**
+- `POST /api/pay/initiate`: Generates an `orderId` and returns a redirect URL to the external D-TECH Secure Payment Gateway.
+- `POST /api/pay/verify`: Called after a user returns from payment. Validates the payment token against the external gateway and applies the corresponding plan upgrade to the user's account.
+
+**Admin Routes (Protected by Admin Cookie):**
+- `POST /admin/login`: Authenticates the admin user and sets a secure HTTP-only cookie.
+- `GET /api/admin/analytics`: Aggregates total users, active subscriptions, total active sites, and total captures via KV pagination.
+- `GET /api/admin/users`: Lists all registered users.
+- `POST /api/admin/users/action`: Executes administrative actions on a user (suspend, ban, activate, delete, update plan).
+- `GET / POST / DELETE /api/admin/templates`: Full CRUD access for the system's global templates.
+- `GET / DELETE /api/admin/sites`: View and forcefully delete any deployed site on the platform.
+- `GET / POST /api/admin/vouchers`: Manage and process pending voucher upgrades.
